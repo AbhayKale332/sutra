@@ -27,8 +27,8 @@ const LandingNavbar = () => {
       className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-brand-purple to-brand-blue"
     >
       <div className="container mx-auto flex items-center justify-between px-6 py-4">
-        <Link to="/" className="text-2xl font-bold text-primary-foreground tracking-tight flex items-center gap-1.5">
-          <div className="w-8 h-8">
+        <Link to="/" className="text-2xl font-bold text-primary-foreground tracking-tight flex items-center gap-1.5 focus:outline-none">
+          <div className="w-10 h-10">
             <DotLottieReact src={linkLottie} loop autoplay />
           </div>
           Sutra
