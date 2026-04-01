@@ -28,7 +28,7 @@ const LandingNavbar = () => {
     >
       <div className="container mx-auto flex items-center justify-between px-6 py-4">
         <Link to="/" className="text-2xl font-bold text-primary-foreground tracking-tight flex items-center gap-1.5 focus:outline-none">
-          <div className="w-10 h-10">
+          <div className="w-14 h-14">
             <DotLottieReact src={linkLottie} loop autoplay />
           </div>
           Sutra
