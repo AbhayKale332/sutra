@@ -23,8 +23,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import ThemeToggle from "@/components/ThemeToggle";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
-import linkLottie from "../assets/link.lottie";
-import loadingLottie from "../assets/loading.lottie";
+import linkLottie from "../assets/lottie/Url Link.lottie";
+import loadingLottie from "../assets/lottie/Circle Shape Morphing animation.lottie";
 
 interface UrlMapping {
   id: number;

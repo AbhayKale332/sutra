@@ -6,7 +6,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
-import linkLottie from "../../assets/link.lottie";
+import linkLottie from "../../assets/lottie/Url Link.lottie";
 
 const LandingNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);

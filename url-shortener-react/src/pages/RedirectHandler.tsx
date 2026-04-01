@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
-import loadingLottie from "../assets/loading.lottie";
+import loadingLottie from "../assets/lottie/Circle Shape Morphing animation.lottie";
 
 /**
  * Handles the redirection logic from the frontend to the backend's redirect endpoint.
