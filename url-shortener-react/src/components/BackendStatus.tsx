@@ -1,30 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import api from '@/api/api';
-import { motion } from 'framer-motion';
+import React from 'react';
+import { useBackendStatus } from '@/context/BackendStatusContext';
 
 const BackendStatus = () => {
-    const [status, setStatus] = useState<'online' | 'offline' | 'checking'>('checking');
-
-    useEffect(() => {
-        const checkStatus = async () => {
-            try {
-                // We call the root endpoint of the backend
-                const response = await api.get('/');
-                if (response.data.includes("Sutra API is running")) {
-                    setStatus('online');
-                } else {
-                    setStatus('offline');
-                }
-            } catch (error) {
-                setStatus('offline');
-            }
-        };
-
-        checkStatus();
-        const interval = setInterval(checkStatus, 30000); // Check every 30 seconds
-
-        return () => clearInterval(interval);
-    }, []);
+    const { status } = useBackendStatus();
 
     return (
         <div className="flex flex-col gap-2 text-left">
