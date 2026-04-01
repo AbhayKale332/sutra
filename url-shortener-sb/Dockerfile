@@ -1,5 +1,5 @@
-# Use a Java 23 JDK image to build the Spring Boot app
-FROM eclipse-temurin:23-jdk AS build
+# Use a Java 21 JDK image to build the Spring Boot app
+FROM eclipse-temurin:21-jdk AS build
 
 # Set the working directory
 WORKDIR /app
@@ -19,8 +19,8 @@ RUN ./mvnw dependency:go-offline
 COPY src ./src
 RUN ./mvnw clean package -DskipTests
 
-# Use a Java 23 runtime image to run the application
-FROM eclipse-temurin:23-jre
+# Use a Java 21 runtime image to run the application
+FROM eclipse-temurin:21-jre
 
 # Set the working directory
 WORKDIR /app

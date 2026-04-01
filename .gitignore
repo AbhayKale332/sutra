@@ -1,0 +1,13 @@
+# Environment variables
+.env
+render.env
+*.local
+
+# IDE files
+.idea/
+.vscode/
+
+# Build artifacts
+target/
+dist/
+node_modules/

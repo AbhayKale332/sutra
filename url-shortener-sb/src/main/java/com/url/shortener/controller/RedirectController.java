@@ -15,6 +15,11 @@ public class RedirectController {
 
     private UrlMappingService urlMappingService;
 
+    @GetMapping("/")
+    public String home() {
+        return "Sutra API is running!";
+    }
+
     @GetMapping("/{shortUrl}")
     public ResponseEntity<Void> redirect(@PathVariable String shortUrl){
         UrlMapping urlMapping = urlMappingService.getOriginalUrl(shortUrl);
