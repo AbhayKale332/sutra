@@ -218,8 +218,8 @@ const Dashboard = () => {
       {/* Dashboard Nav */}
       <nav className="border-b bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 sticky top-0 z-40">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="text-xl font-bold tracking-tight flex items-center gap-2 text-brand-purple focus:outline-none">
-            <div className="w-14 h-14">
+          <Link to="/" className="text-xl font-bold tracking-tight flex items-center gap-2 text-brand-purple focus:outline-none h-full">
+            <div className="w-16 h-16">
               <DotLottieReact src={linkLottie} loop autoplay />
             </div>
             Sutra
