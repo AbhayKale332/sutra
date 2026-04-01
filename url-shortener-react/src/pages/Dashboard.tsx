@@ -17,8 +17,10 @@ import {
 import { 
   Link2, Plus, Copy, ExternalLink, BarChart3, 
   Calendar, MousePointer2, Trash2, Loader2, LogOut, ChevronRight,
-  QrCode, Download
+  QrCode, Download, Palette, Image as ImageIcon, Maximize
 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Slider } from "@/components/ui/slider";
 
 interface UrlMapping {
   id: number;
@@ -41,6 +43,12 @@ const Dashboard = () => {
   const [totalClicks, setTotalClicks] = useState<any[]>([]);
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
+  
+  // QR Studio Customization States
+  const [qrFgColor, setQrFgColor] = useState("#7C3AED"); // Brand Purple
+  const [qrBgColor, setQrBgColor] = useState("#ffffff");
+  const [qrSize, setQrSize] = useState(256);
+  const [qrLogo, setQrLogo] = useState<string | null>(null);
 
   const fetchUrls = async () => {
     try {
@@ -132,30 +140,50 @@ const Dashboard = () => {
     toast.success("Copied to clipboard!");
   };
 
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setQrLogo(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const downloadQRCode = (shortUrl: string) => {
     const svg = document.getElementById(`qr-code-${shortUrl}`);
     if (!svg) return;
 
+    // Use a temporary canvas to render the high-res version
     const svgData = new XMLSerializer().serializeToString(svg);
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     const img = new Image();
 
+    // Scale canvas to user-defined high resolution (qrSize)
+    const scale = qrSize / 200; // Original SVG size is 200 in the UI
+
     img.onload = () => {
-      canvas.width = img.width + 40;
-      canvas.height = img.height + 40;
+      canvas.width = qrSize + 80; // Add padding
+      canvas.height = qrSize + 80;
       if (ctx) {
-        ctx.fillStyle = "white";
+        ctx.fillStyle = qrBgColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 20, 20);
-        const pngFile = canvas.toDataURL("image/png");
+        
+        // Final draw with high resolution
+        ctx.drawImage(img, 40, 40, qrSize, qrSize);
+        
+        const pngFile = canvas.toDataURL("image/png", 1.0);
         const downloadLink = document.createElement("a");
-        downloadLink.download = `qr-code-${shortUrl}.png`;
+        downloadLink.download = `qr-sutra-${shortUrl}.png`;
         downloadLink.href = pngFile;
         downloadLink.click();
       }
     };
-    img.src = "data:image/svg+xml;base64," + btoa(svgData);
+    // Ensure all styles are captured in the blob
+    const encodedSVG = btoa(unescape(encodeURIComponent(svgData)));
+    img.src = "data:image/svg+xml;base64," + encodedSVG;
   };
 
   return (
@@ -405,40 +433,154 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* QR Code Dialog */}
+        {/* QR Studio Dialog */}
         <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
-          <DialogContent className="sm:max-w-sm flex flex-col items-center">
-            <DialogHeader className="w-full text-center">
-              <DialogTitle>QR Code</DialogTitle>
-              <DialogDescription>
-                Scan this code to instantly visit the link.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="p-6 bg-white rounded-xl shadow-inner border my-2">
-              {qrUrl && (
-                <QRCodeSVG 
-                  id={`qr-code-${qrUrl.split('/').pop()}`}
-                  value={qrUrl} 
-                  size={200}
-                  level="H"
-                  includeMargin={false}
-                />
-              )}
+          <DialogContent className="sm:max-w-3xl flex flex-col md:flex-row overflow-hidden p-0 gap-0 border-none shadow-2xl">
+            <div className="flex-1 bg-slate-100/50 dark:bg-slate-900/50 p-8 flex flex-col items-center justify-center border-r border-slate-200 dark:border-slate-800">
+               <div className="text-center mb-6">
+                 <h2 className="text-2xl font-bold mb-1">QR Preview</h2>
+                 <p className="text-sm text-slate-500">Live branding preview</p>
+               </div>
+               
+               <div 
+                 className="p-8 rounded-2xl shadow-xl transition-all duration-300"
+                 style={{ backgroundColor: qrBgColor }}
+               >
+                 {qrUrl && (
+                    <QRCodeSVG 
+                      id={`qr-code-${qrUrl.split('/').pop()}`}
+                      value={qrUrl} 
+                      size={240}
+                      level="H"
+                      fgColor={qrFgColor}
+                      bgColor={qrBgColor}
+                      includeMargin={false}
+                      imageSettings={qrLogo ? {
+                        src: qrLogo,
+                        x: undefined,
+                        y: undefined,
+                        height: 50,
+                        width: 50,
+                        excavate: true,
+                      } : undefined}
+                    />
+                  )}
+               </div>
+               
+               <div className="mt-8 text-xs text-slate-400 max-w-[240px] text-center">
+                 Customized for {qrUrl?.split('/').pop()}
+               </div>
             </div>
-            <div className="flex w-full gap-3 mt-4">
-              <Button 
-                className="flex-1 bg-brand-purple hover:bg-brand-purple/90"
-                onClick={() => qrUrl && downloadQRCode(qrUrl.split('/').pop() || "qr")}
-              >
-                <Download size={18} className="mr-2" /> Download PNG
-              </Button>
-              <Button 
-                variant="outline" 
-                className="flex-1"
-                onClick={() => setIsQrDialogOpen(false)}
-              >
-                Close
-              </Button>
+
+            <div className="w-full md:w-[350px] bg-white dark:bg-slate-950 p-6 flex flex-col">
+              <DialogHeader className="mb-6">
+                <DialogTitle className="text-xl">QR Studio</DialogTitle>
+                <DialogDescription>
+                  Personalize your link's visual signature
+                </DialogDescription>
+              </DialogHeader>
+
+              <Tabs defaultValue="style" className="flex-1">
+                <TabsList className="grid grid-cols-2 mb-6">
+                  <TabsTrigger value="style" className="flex items-center gap-2">
+                    <Palette size={14} /> Style
+                  </TabsTrigger>
+                  <TabsTrigger value="logo" className="flex items-center gap-2">
+                    <ImageIcon size={14} /> Logo
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="style" className="space-y-6">
+                   <div className="space-y-3">
+                     <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Colors</Label>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs text-slate-500">Foreground</Label>
+                          <div className="flex items-center gap-2">
+                             <Input 
+                               type="color" 
+                               value={qrFgColor} 
+                               onChange={(e) => setQrFgColor(e.target.value)}
+                               className="h-10 w-full p-1 cursor-pointer border-none bg-transparent" 
+                             />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs text-slate-500">Background</Label>
+                          <div className="flex items-center gap-2">
+                             <Input 
+                               type="color" 
+                               value={qrBgColor} 
+                               onChange={(e) => setQrBgColor(e.target.value)}
+                               className="h-10 w-full p-1 cursor-pointer border-none bg-transparent" 
+                             />
+                          </div>
+                        </div>
+                     </div>
+                   </div>
+
+                   <div className="space-y-3">
+                     <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Export Resolution</Label>
+                     <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                        <span>Low Res</span>
+                        <span className="font-bold text-brand-purple">{qrSize}px</span>
+                        <span>High Res</span>
+                     </div>
+                     <Slider 
+                        value={[qrSize]} 
+                        onValueChange={(val) => setQrSize(val[0])}
+                        min={128} 
+                        max={1024} 
+                        step={128}
+                        className="py-4"
+                     />
+                   </div>
+                </TabsContent>
+
+                <TabsContent value="logo" className="space-y-6">
+                   <div className="space-y-3">
+                     <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Logo Centerpiece</Label>
+                     <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-6 flex flex-col items-center justify-center gap-3">
+                        {qrLogo ? (
+                          <div className="relative group">
+                             <img src={qrLogo} alt="Preview" className="w-16 h-16 object-contain rounded border" />
+                             <button 
+                               onClick={() => setQrLogo(null)}
+                               className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                             >
+                               <Trash2 size={12} />
+                             </button>
+                          </div>
+                        ) : (
+                          <ImageIcon size={32} className="text-slate-300" />
+                        )}
+                        <Input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleLogoUpload}
+                          className="text-xs h-9 cursor-pointer"
+                        />
+                        <p className="text-[10px] text-slate-400 text-center">PNG/JPG works best. Size capped at 20% for scannability.</p>
+                     </div>
+                   </div>
+                </TabsContent>
+              </Tabs>
+
+              <div className="mt-8 flex gap-3">
+                <Button 
+                  className="flex-1 bg-brand-purple hover:bg-brand-purple/90 h-11"
+                  onClick={() => qrUrl && downloadQRCode(qrUrl.split('/').pop() || "qr")}
+                >
+                  <Download size={18} className="mr-2" /> Download
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-11"
+                  onClick={() => setIsQrDialogOpen(false)}
+                >
+                  Close
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
