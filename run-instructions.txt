@@ -1,0 +1,19 @@
+To run the URL Shortener project daily on your local machine, open your terminal and follow these steps:
+
+--- 1. START THE BACKEND (Spring Boot) ---
+Open a terminal, navigate to the backend directory, and start the Spring Boot server:
+
+    cd url-shortener-sb
+    ./mvnw spring-boot:run
+
+The backend API will start and run on port 8080.
+*(Make sure your MySQL server is currently running in the background!)*
+
+
+--- 2. START THE FRONTEND (React) ---
+Open a second terminal window, navigate to the frontend directory, and start the development server:
+
+    cd url-shortener-react
+    npm run dev
+
+The React application will be available at http://localhost:5173.
