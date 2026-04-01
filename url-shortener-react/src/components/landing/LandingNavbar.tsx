@@ -5,6 +5,8 @@ import { Menu, X, Link2, LogOut } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import linkLottie from "../../assets/link.lottie";
 
 const LandingNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,7 +28,10 @@ const LandingNavbar = () => {
     >
       <div className="container mx-auto flex items-center justify-between px-6 py-4">
         <Link to="/" className="text-2xl font-bold text-primary-foreground tracking-tight flex items-center gap-1.5">
-          <Link2 size={22} className="rotate-[-45deg]" /> Sutra
+          <div className="w-8 h-8">
+            <DotLottieReact src={linkLottie} loop autoplay />
+          </div>
+          Sutra
         </Link>
         <div className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (

@@ -22,6 +22,9 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import ThemeToggle from "@/components/ThemeToggle";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import linkLottie from "../assets/link.lottie";
+import loadingLottie from "../assets/loading.lottie";
 
 interface UrlMapping {
   id: number;
@@ -47,7 +50,7 @@ const Dashboard = () => {
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
   
   // QR Studio Customization States
-  const [qrFgColor, setQrFgColor] = useState("#7C3AED"); // Brand Purple
+  const [qrFgColor, setQrFgColor] = useState("#000000"); // Classic Black
   const [qrBgColor, setQrBgColor] = useState("#ffffff");
   const [qrSize, setQrSize] = useState(256);
   const [qrLogo, setQrLogo] = useState<string | null>(null);
@@ -216,7 +219,10 @@ const Dashboard = () => {
       <nav className="border-b bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 sticky top-0 z-40">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="text-xl font-bold tracking-tight flex items-center gap-2 text-brand-purple">
-            <Link2 size={24} className="rotate-[-45deg]" /> Sutra
+            <div className="w-8 h-8">
+              <DotLottieReact src={linkLottie} loop autoplay />
+            </div>
+            Sutra
           </Link>
           <div className="flex items-center gap-4">
             <ThemeToggle className="text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800" />
