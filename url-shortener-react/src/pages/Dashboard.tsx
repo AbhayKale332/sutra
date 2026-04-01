@@ -6,18 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  LineChart, Line 
-} from "recharts";
-import { 
-  Link2, Plus, Copy, ExternalLink, BarChart3, 
-  Calendar, MousePointer2, Trash2, Loader2, LogOut, ChevronRight
-} from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import dayjs from "dayjs";
+import { QRCodeSVG } from "qrcode.react";
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
+} from "recharts";
+import { 
+  Link2, Plus, Copy, ExternalLink, BarChart3, 
+  Calendar, MousePointer2, Trash2, Loader2, LogOut, ChevronRight,
+  QrCode, Download
+} from "lucide-react";
 
 interface UrlMapping {
   id: number;
@@ -38,6 +39,8 @@ const Dashboard = () => {
   const [newUrl, setNewUrl] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [totalClicks, setTotalClicks] = useState<any[]>([]);
+  const [qrUrl, setQrUrl] = useState<string | null>(null);
+  const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
 
   const fetchUrls = async () => {
     try {
@@ -124,9 +127,35 @@ const Dashboard = () => {
   };
 
   const copyToClipboard = (text: string) => {
-    const fullUrl = `${window.location.origin}/s/${text}`;
+    const fullUrl = `${window.location.protocol}//${window.location.host}/s/${text}`;
     navigator.clipboard.writeText(fullUrl);
     toast.success("Copied to clipboard!");
+  };
+
+  const downloadQRCode = (shortUrl: string) => {
+    const svg = document.getElementById(`qr-code-${shortUrl}`);
+    if (!svg) return;
+
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+
+    img.onload = () => {
+      canvas.width = img.width + 40;
+      canvas.height = img.height + 40;
+      if (ctx) {
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 20, 20);
+        const pngFile = canvas.toDataURL("image/png");
+        const downloadLink = document.createElement("a");
+        downloadLink.download = `qr-code-${shortUrl}.png`;
+        downloadLink.href = pngFile;
+        downloadLink.click();
+      }
+    };
+    img.src = "data:image/svg+xml;base64," + btoa(svgData);
   };
 
   return (
@@ -280,6 +309,9 @@ const Dashboard = () => {
                               <Button size="icon" variant="ghost" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); copyToClipboard(url.shortUrl); }}>
                                 <Copy size={16} />
                               </Button>
+                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setQrUrl(`${window.location.protocol}//${window.location.host}/s/${url.shortUrl}`); setIsQrDialogOpen(true); }}>
+                                <QrCode size={16} />
+                              </Button>
                               <a href={`${window.location.protocol}//${window.location.host}/s/${url.shortUrl}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
                                 <Button size="icon" variant="ghost" className="h-8 w-8">
                                   <ExternalLink size={16} />
@@ -372,6 +404,44 @@ const Dashboard = () => {
             </AnimatePresence>
           )}
         </div>
+
+        {/* QR Code Dialog */}
+        <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
+          <DialogContent className="sm:max-w-sm flex flex-col items-center">
+            <DialogHeader className="w-full text-center">
+              <DialogTitle>QR Code</DialogTitle>
+              <DialogDescription>
+                Scan this code to instantly visit the link.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="p-6 bg-white rounded-xl shadow-inner border my-2">
+              {qrUrl && (
+                <QRCodeSVG 
+                  id={`qr-code-${qrUrl.split('/').pop()}`}
+                  value={qrUrl} 
+                  size={200}
+                  level="H"
+                  includeMargin={false}
+                />
+              )}
+            </div>
+            <div className="flex w-full gap-3 mt-4">
+              <Button 
+                className="flex-1 bg-brand-purple hover:bg-brand-purple/90"
+                onClick={() => qrUrl && downloadQRCode(qrUrl.split('/').pop() || "qr")}
+              >
+                <Download size={18} className="mr-2" /> Download PNG
+              </Button>
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => setIsQrDialogOpen(false)}
+              >
+                Close
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
       
       <footer className="py-8 border-t border-slate-200 dark:border-slate-800 mt-12 bg-white dark:bg-slate-950">
