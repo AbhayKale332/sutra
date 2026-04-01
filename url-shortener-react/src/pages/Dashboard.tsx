@@ -39,6 +39,7 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [newUrl, setNewUrl] = useState("");
+  const [customShortUrl, setCustomShortUrl] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [totalClicks, setTotalClicks] = useState<any[]>([]);
   const [qrUrl, setQrUrl] = useState<string | null>(null);
@@ -120,15 +121,23 @@ const Dashboard = () => {
     try {
       await api.post(
         "/api/urls/shorten",
-        { originalUrl: newUrl },
+        { 
+          originalUrl: newUrl,
+          shortUrl: customShortUrl.trim() || undefined 
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("URL shortened successfully!");
       setNewUrl("");
+      setCustomShortUrl("");
       setIsDialogOpen(false);
       fetchUrls();
-    } catch (error) {
-      toast.error("Failed to shorten URL");
+    } catch (error: any) {
+      if (error.response?.status === 400) {
+        toast.error("That custom link is already taken!");
+      } else {
+        toast.error("Failed to shorten URL");
+      }
     } finally {
       setIsCreating(false);
     }
@@ -233,6 +242,20 @@ const Dashboard = () => {
                       onChange={(e) => setNewUrl(e.target.value)}
                       required
                     />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="custom">Custom Link (optional)</Label>
+                    <div className="flex items-center gap-2">
+                      <div className="bg-slate-100 dark:bg-slate-800 px-3 h-10 flex items-center rounded-md border text-slate-500 text-sm">
+                        {window.location.host}/s/
+                      </div>
+                      <Input
+                        id="custom"
+                        placeholder="my-brand-link"
+                        value={customShortUrl}
+                        onChange={(e) => setCustomShortUrl(e.target.value.replace(/[^a-zA-Z0-9-]/g, ""))}
+                      />
+                    </div>
                   </div>
                 </div>
                 <DialogFooter>

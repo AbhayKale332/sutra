@@ -24,8 +24,17 @@ public class UrlMappingService {
     private UrlMappingRepository urlMappingRepository;
     private ClickEventRepository clickEventRepository;
 
-    public UrlMappingDTO createShortUrl(String originalUrl, User user) {
-        String shortUrl = generateShortUrl();
+    public UrlMappingDTO createShortUrl(String originalUrl, String customSlug, User user) {
+        String shortUrl;
+        if (customSlug != null && !customSlug.isEmpty()) {
+            if (urlMappingRepository.findByShortUrl(customSlug) != null) {
+                throw new RuntimeException("Custom link is already taken!");
+            }
+            shortUrl = customSlug;
+        } else {
+            shortUrl = generateShortUrl();
+        }
+        
         UrlMapping urlMapping = new UrlMapping();
         urlMapping.setOriginalUrl(originalUrl);
         urlMapping.setShortUrl(shortUrl);
