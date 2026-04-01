@@ -42,7 +42,7 @@ const LandingFooter = () => {
           </div>
         </div>
         <div className="border-t border-background/10 mt-10 pt-6 text-center text-background/40 text-sm">
-          © {new Date().getFullYear()} Sutra. All rights reserved.
+          © {new Date().getFullYear()} Sutra. Developed by Abhay Kale
         </div>
       </div>
     </footer>

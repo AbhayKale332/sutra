@@ -239,7 +239,7 @@ const Dashboard = () => {
                     cursor={{fill: 'hsl(var(--muted-foreground)/.05)'}}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                   />
-                  <Bar dataKey="clicks" fill="url(#colorClicks)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="clicks" fill="url(#colorClicks)" radius={[4, 4, 0, 0]} barSize={40} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -316,7 +316,7 @@ const Dashboard = () => {
       
       <footer className="py-8 border-t border-slate-200 dark:border-slate-800 mt-12 bg-white dark:bg-slate-950">
         <div className="container mx-auto px-4 text-center text-sm text-slate-500">
-          © {new Date().getFullYear()} Sutra Linklytics. All rights reserved.
+          © {new Date().getFullYear()} Sutra Linklytics. Developed by Abhay Kale
         </div>
       </footer>
     </div>
