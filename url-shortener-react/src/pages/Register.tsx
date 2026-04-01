@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { toast } from "sonner";
 import { Link2, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const Register = () => {
   const [username, setUsername] = useState("");
@@ -39,7 +40,10 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12 dark:bg-slate-950">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12 dark:bg-slate-950 relative">
+      <div className="absolute top-4 right-4 z-50">
+        <ThemeToggle className="bg-white/80 backdrop-blur-sm shadow-sm border dark:border-slate-800 dark:bg-slate-900/80" />
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

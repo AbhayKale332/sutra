@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface UrlMapping {
   id: number;
@@ -204,6 +205,7 @@ const Dashboard = () => {
             <Link2 size={24} className="rotate-[-45deg]" /> Sutra
           </Link>
           <div className="flex items-center gap-4">
+            <ThemeToggle className="text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800" />
             <Button variant="ghost" size="sm" onClick={logout} className="text-slate-600 hover:text-red-600 transition-colors">
               <LogOut size={18} className="mr-2" /> LogOut
             </Button>
@@ -246,7 +248,7 @@ const Dashboard = () => {
                   <div className="grid gap-2">
                     <Label htmlFor="custom">Custom Link (optional)</Label>
                     <div className="flex items-center gap-2">
-                      <div className="bg-slate-100 dark:bg-slate-800 px-3 h-10 flex items-center rounded-md border text-slate-500 text-sm">
+                      <div className="bg-slate-100 dark:bg-slate-800 px-3 h-10 flex items-center rounded-md border text-slate-500 text-sm whitespace-nowrap shrink-0">
                         {window.location.host}/s/
                       </div>
                       <Input
