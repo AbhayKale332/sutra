@@ -110,6 +110,20 @@ const Dashboard = () => {
     }
   };
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 rounded-lg shadow-lg text-[11px]">
+          <p className="font-semibold text-slate-500 dark:text-slate-400 mb-1">{dayjs(label).format("MMM DD, YYYY")}</p>
+          <p className="text-brand-purple font-bold flex items-center gap-1">
+            <MousePointer2 size={10} /> {payload[0].value} clicks
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   useEffect(() => {
     fetchUrls();
   }, [token]);
@@ -435,7 +449,7 @@ const Dashboard = () => {
                                       />
                                       <Tooltip 
                                         cursor={{fill: 'hsl(var(--muted-foreground)/.05)'}}
-                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '11px' }}
+                                        content={<CustomTooltip />}
                                       />
                                       <Bar dataKey="clicks" fill={`url(#grad-${url.id})`} radius={[4, 4, 0, 0]} barSize={25} />
                                     </BarChart>
