@@ -22,6 +22,8 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import ThemeToggle from "@/components/ThemeToggle";
+import BackendStatus from "@/components/BackendStatus";
+
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import linkLottie from "../assets/lottie/Url Link.lottie";
 import loadingLottie from "../assets/lottie/Circle Shape Morphing animation.lottie";
@@ -631,9 +633,22 @@ const Dashboard = () => {
         </Dialog>
       </main>
       
-      <footer className="py-8 border-t border-slate-200 dark:border-slate-800 mt-12 bg-white dark:bg-slate-950">
-        <div className="container mx-auto px-4 text-center text-sm text-slate-500">
-          © {new Date().getFullYear()} Sutra Linklytics. Developed by Abhay Kale
+      <footer className="py-10 border-t border-slate-200 dark:border-slate-800 mt-12 bg-white dark:bg-slate-950/50">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div className="text-left">
+               <div className="flex items-center gap-2 mb-2">
+                 <Link2 className="w-5 h-5 text-brand-purple" />
+                 <span className="font-bold text-slate-900 dark:text-slate-100">Sutra Linklytics</span>
+               </div>
+               <p className="text-xs text-slate-500">
+                 © {new Date().getFullYear()} Developed by Abhay Kale. All rights reserved.
+               </p>
+            </div>
+            <div className="flex md:justify-end">
+               <BackendStatus />
+            </div>
+          </div>
         </div>
       </footer>
     </div>

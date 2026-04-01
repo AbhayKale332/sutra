@@ -1,10 +1,11 @@
 import { Link2, Github, Twitter, Linkedin } from "lucide-react";
+import BackendStatus from "../BackendStatus";
 
 const LandingFooter = () => {
   return (
     <footer className="bg-slate-900 text-slate-100 py-14 dark:bg-slate-950 dark:border-t dark:border-slate-800 dark:text-slate-400">
       <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           <div>
             <div className="flex items-center gap-2 mb-4 text-white">
               <Link2 className="w-6 h-6 rotate-[-45deg]" />
@@ -13,6 +14,10 @@ const LandingFooter = () => {
             <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
               The modern URL shortener with powerful analytics for teams and individuals.
             </p>
+          </div>
+
+          <div className="flex flex-col md:items-center">
+             <BackendStatus />
           </div>
           
           <div className="flex flex-col md:items-end">
