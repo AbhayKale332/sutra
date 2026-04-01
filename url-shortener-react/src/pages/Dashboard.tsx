@@ -224,7 +224,7 @@ const Dashboard = () => {
                 <Plus size={18} className="mr-2" /> Create New Link
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-xl">
               <DialogHeader>
                 <DialogTitle>Shorten a long URL</DialogTitle>
                 <DialogDescription>
