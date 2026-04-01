@@ -282,7 +282,7 @@ const Dashboard = () => {
                       <div className="flex-1 p-5">
                         <div className="flex items-center justify-between mb-2">
                           <div className="text-sm font-medium text-brand-purple flex items-center bg-brand-purple/5 px-2 py-0.5 rounded">
-                            localhost:5173/s/{url.shortUrl}
+                            {window.location.host}/s/{url.shortUrl}
                           </div>
                           <div className="flex items-center gap-2 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                             <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => copyToClipboard(url.shortUrl)}>
