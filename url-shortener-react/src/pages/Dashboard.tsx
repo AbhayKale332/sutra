@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
+import { Badge } from "@/components/ui/badge";
 import ThemeToggle from "@/components/ThemeToggle";
 import BackendStatus from "@/components/BackendStatus";
 
@@ -58,8 +59,8 @@ const Dashboard = () => {
   const [qrBgColor, setQrBgColor] = useState("#ffffff");
   const [qrSize, setQrSize] = useState(256);
   const [qrLogo, setQrLogo] = useState<string | null>(null);
-  const [qrDotsType, setQrDotsType] = useState<DotType>("dots");
-  const [qrCornersType, setQrCornersType] = useState<CornerSquareType>("extra-rounded");
+  const [qrDotsType, setQrDotsType] = useState<DotType>("square");
+  const [qrCornersType, setQrCornersType] = useState<CornerSquareType>("square");
   const [qrShape, setQrShape] = useState<string>("square");
   const [qrTheme, setQrTheme] = useState("default");
   const [qrLogoSize, setQrLogoSize] = useState([3]);
@@ -75,8 +76,6 @@ const Dashboard = () => {
   }));
 
   useEffect(() => {
-    if (!qrUrl) return;
-
     qrCodeStyling.update({
       data: qrUrl || "https://sutra.link",
       width: 240,
