@@ -1,6 +1,10 @@
 package com.url.shortener.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CachingConfigurer;
+import org.springframework.cache.interceptor.CacheErrorHandler;
+import org.springframework.cache.interceptor.SimpleCacheErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -13,8 +17,9 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
 
+@Slf4j
 @Configuration
-public class RedisConfig {
+public class RedisConfig implements CachingConfigurer {
 
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
@@ -33,8 +38,41 @@ public class RedisConfig {
     }
 
     /**
+     * Silently log Redis errors instead of propagating them.
+     * If Redis is down or returns bad data, Spring will call the real method
+     * (i.e., MySQL) as a fallback — the user never sees a 500.
+     */
+    @Override
+    public CacheErrorHandler errorHandler() {
+        return new SimpleCacheErrorHandler() {
+            @Override
+            public void handleCacheGetError(RuntimeException e, org.springframework.cache.Cache cache, Object key) {
+                log.warn("Redis cache GET error on cache='{}' key='{}': {} — falling back to DB",
+                        cache.getName(), key, e.getMessage());
+            }
+
+            @Override
+            public void handleCachePutError(RuntimeException e, org.springframework.cache.Cache cache, Object key, Object value) {
+                log.warn("Redis cache PUT error on cache='{}' key='{}': {}",
+                        cache.getName(), key, e.getMessage());
+            }
+
+            @Override
+            public void handleCacheEvictError(RuntimeException e, org.springframework.cache.Cache cache, Object key) {
+                log.warn("Redis cache EVICT error on cache='{}' key='{}': {}",
+                        cache.getName(), key, e.getMessage());
+            }
+
+            @Override
+            public void handleCacheClearError(RuntimeException e, org.springframework.cache.Cache cache) {
+                log.warn("Redis cache CLEAR error on cache='{}': {}", cache.getName(), e.getMessage());
+            }
+        };
+    }
+
+    /**
      * General-purpose String RedisTemplate used by ClickBuffer for raw
-     * Redis commands (INCR counters, LPUSH timestamps, KEYS scanning).
+     * Redis commands (INCR counters, SADD tracking set).
      */
     @Bean
     public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory connectionFactory) {
