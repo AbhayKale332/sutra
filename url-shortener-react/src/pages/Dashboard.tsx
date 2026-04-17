@@ -61,6 +61,7 @@ const Dashboard = () => {
   const [qrDotsType, setQrDotsType] = useState<DotType>("dots");
   const [qrCornersType, setQrCornersType] = useState<CornerSquareType>("extra-rounded");
   const [qrShape, setQrShape] = useState<ShapeType>("square");
+  const [qrTheme, setQrTheme] = useState("default");
 
   const qrRef = React.useRef<HTMLDivElement>(null);
   const [qrCodeStyling] = useState<QRCodeStyling>(new QRCodeStyling({
@@ -96,11 +97,53 @@ const Dashboard = () => {
       image: qrLogo || undefined,
     });
     
-    if (qrRef.current) {
+    if (isQrDialogOpen && qrRef.current) {
       qrRef.current.innerHTML = "";
       qrCodeStyling.append(qrRef.current);
     }
-  }, [qrUrl, qrFgColor, qrBgColor, qrSize, qrLogo, qrDotsType, qrCornersType, qrShape, qrCodeStyling]);
+  }, [qrUrl, qrFgColor, qrBgColor, qrSize, qrLogo, qrDotsType, qrCornersType, qrShape, qrCodeStyling, isQrDialogOpen]);
+
+  const applyTheme = (theme: string) => {
+    setQrTheme(theme);
+    switch (theme) {
+      case "spotify":
+        setQrFgColor("#1DB954");
+        setQrBgColor("#000000");
+        setQrDotsType("classy-rounded");
+        setQrCornersType("extra-rounded");
+        setQrShape("square");
+        break;
+      case "matrix":
+        setQrFgColor("#00FF41");
+        setQrBgColor("#0D0D0D");
+        setQrDotsType("square");
+        setQrCornersType("square");
+        setQrShape("square");
+        break;
+      case "cyberpunk":
+        setQrFgColor("#FCEE0A");
+        setQrBgColor("#120458");
+        setQrDotsType("dots");
+        setQrCornersType("extra-rounded");
+        setQrShape("circle");
+        break;
+      case "liquid":
+        setQrFgColor("#FF007F");
+        setQrBgColor("#FFFFFF");
+        setQrDotsType("rounded");
+        setQrCornersType("dot");
+        setQrShape("circle");
+        break;
+      case "default":
+      default:
+        setQrFgColor("#000000");
+        setQrBgColor("#ffffff");
+        setQrDotsType("dots");
+        setQrCornersType("extra-rounded");
+        setQrShape("square");
+        break;
+    }
+  };
 
   const fetchUrls = async () => {
     try {
@@ -585,6 +628,22 @@ const Dashboard = () => {
                 </TabsList>
                 
                 <TabsContent value="style" className="space-y-6">
+                   <div className="space-y-3">
+                     <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Quick Themes</Label>
+                     <Select value={qrTheme} onValueChange={applyTheme}>
+                       <SelectTrigger className="w-full text-xs h-10 bg-brand-purple/10 text-brand-purple border-brand-purple/20 font-semibold focus:ring-brand-purple/30 focus:border-brand-purple/50">
+                         <SelectValue placeholder="Select a preset theme..." />
+                       </SelectTrigger>
+                       <SelectContent>
+                         <SelectItem value="default">Default Classic</SelectItem>
+                         <SelectItem value="spotify">Spotify Style (Green/Black)</SelectItem>
+                         <SelectItem value="matrix">Matrix Hacker</SelectItem>
+                         <SelectItem value="cyberpunk">Cyberpunk Neon</SelectItem>
+                         <SelectItem value="liquid">Liquid Pink</SelectItem>
+                       </SelectContent>
+                     </Select>
+                   </div>
+
                    <div className="space-y-3">
                      <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Shape Options</Label>
                      <div className="grid grid-cols-2 gap-4 mb-4">
