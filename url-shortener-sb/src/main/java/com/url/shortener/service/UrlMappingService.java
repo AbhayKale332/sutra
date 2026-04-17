@@ -26,6 +26,7 @@ public class UrlMappingService {
 
     private UrlMappingRepository urlMappingRepository;
     private ClickEventRepository clickEventRepository;
+    private ClickBufferService clickBufferService;
 
     @CacheEvict(value = "urls", key = "#user.id")
     public UrlMappingDTO createShortUrl(String originalUrl, String customSlug, User user) {
@@ -103,20 +104,21 @@ public class UrlMappingService {
 
     }
 
+    /**
+     * Hot path — called on every redirect.
+     * Only reads from MySQL (or hits the @Cacheable shortUrls cache);
+     * the click is recorded asynchronously in Redis by ClickBufferService.
+     */
     @Cacheable(value = "shortUrls", key = "#shortUrl")
     public UrlMapping getOriginalUrl(String shortUrl) {
-        UrlMapping urlMapping = urlMappingRepository.findByShortUrl(shortUrl);
-        if (urlMapping != null) {
-            urlMapping.setClickCount(urlMapping.getClickCount() + 1);
-            urlMappingRepository.save(urlMapping);
+        return urlMappingRepository.findByShortUrl(shortUrl);
+    }
 
-            // Record Click Event
-            ClickEvent clickEvent = new ClickEvent();
-            clickEvent.setClickDate(LocalDateTime.now());
-            clickEvent.setUrlMapping(urlMapping);
-            clickEventRepository.save(clickEvent);
-        }
-
-        return urlMapping;
+    /**
+     * Called by RedirectController after getOriginalUrl returns.
+     * Enqueues the click in Redis — returns in ~1ms, no MySQL involved.
+     */
+    public void recordClick(String shortUrl) {
+        clickBufferService.recordClick(shortUrl);
     }
 }

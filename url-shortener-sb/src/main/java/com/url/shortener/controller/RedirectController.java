@@ -21,9 +21,12 @@ public class RedirectController {
     }
 
     @GetMapping("/{shortUrl}")
-    public ResponseEntity<Void> redirect(@PathVariable String shortUrl){
+    public ResponseEntity<Void> redirect(@PathVariable String shortUrl) {
         UrlMapping urlMapping = urlMappingService.getOriginalUrl(shortUrl);
         if (urlMapping != null) {
+            // Buffer the click in Redis — no MySQL write on the hot path
+            urlMappingService.recordClick(shortUrl);
+
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.add("Location", urlMapping.getOriginalUrl());
             return ResponseEntity.status(302).headers(httpHeaders).build();
