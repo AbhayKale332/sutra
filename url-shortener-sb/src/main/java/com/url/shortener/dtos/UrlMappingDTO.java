@@ -2,10 +2,11 @@ package com.url.shortener.dtos;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Data
-public class UrlMappingDTO {
+public class UrlMappingDTO implements Serializable {
     private Long id;
     private String originalUrl;
     private String shortUrl;

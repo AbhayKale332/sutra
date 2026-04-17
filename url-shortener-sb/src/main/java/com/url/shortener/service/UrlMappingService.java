@@ -8,6 +8,9 @@ import com.url.shortener.models.User;
 import com.url.shortener.repository.ClickEventRepository;
 import com.url.shortener.repository.UrlMappingRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -24,6 +27,7 @@ public class UrlMappingService {
     private UrlMappingRepository urlMappingRepository;
     private ClickEventRepository clickEventRepository;
 
+    @CacheEvict(value = "urls", key = "#user.id")
     public UrlMappingDTO createShortUrl(String originalUrl, String customSlug, User user) {
         String shortUrl;
         if (customSlug != null && !customSlug.isEmpty()) {
@@ -67,6 +71,7 @@ public class UrlMappingService {
         return shortUrl.toString();
     }
 
+    @Cacheable(value = "urls", key = "#user.id")
     public List<UrlMappingDTO> getUrlsByUser(User user) {
         return urlMappingRepository.findByUser(user).stream()
                 .map(this::convertToDto)
@@ -98,6 +103,7 @@ public class UrlMappingService {
 
     }
 
+    @Cacheable(value = "shortUrls", key = "#shortUrl")
     public UrlMapping getOriginalUrl(String shortUrl) {
         UrlMapping urlMapping = urlMappingRepository.findByShortUrl(shortUrl);
         if (urlMapping != null) {

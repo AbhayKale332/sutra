@@ -1,14 +1,16 @@
 package com.url.shortener.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Data
-public class UrlMapping {
+public class UrlMapping implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,5 +24,6 @@ public class UrlMapping {
     private User user;
 
     @OneToMany(mappedBy = "urlMapping")
+    @JsonIgnore
     private List<ClickEvent> clickEvents;
 }
