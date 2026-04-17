@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -28,7 +29,7 @@ public class UrlMappingService {
     private ClickEventRepository clickEventRepository;
     private ClickBufferService clickBufferService;
 
-    @CacheEvict(value = "urls", key = "#user.id")
+    @CacheEvict(value = "urls", key = "#user.id", beforeInvocation = true)
     public UrlMappingDTO createShortUrl(String originalUrl, String customSlug, User user) {
         String shortUrl;
         if (customSlug != null && !customSlug.isEmpty()) {
@@ -74,9 +75,9 @@ public class UrlMappingService {
 
     @Cacheable(value = "urls", key = "#user.id")
     public List<UrlMappingDTO> getUrlsByUser(User user) {
-        return urlMappingRepository.findByUser(user).stream()
+        return new ArrayList<>(urlMappingRepository.findByUser(user).stream()
                 .map(this::convertToDto)
-                .toList();
+                .toList());
     }
 
     public List<ClickEventDTO> getClickEventsByDate(String shortUrl, LocalDateTime start, LocalDateTime end) {
