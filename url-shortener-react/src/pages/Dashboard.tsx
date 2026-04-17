@@ -13,7 +13,7 @@ import dayjs from "dayjs";
 import QRCodeStyling, { DotType, CornerSquareType, ShapeType } from "qr-code-styling";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from "recharts";
 import { 
   Link2, Plus, Copy, ExternalLink, BarChart3, 
@@ -35,8 +35,15 @@ interface UrlMapping {
   clickCount: number;
   createdDate: string;
   isExpanded?: boolean;
-  analytics?: { date: string; clicks: number }[];
+  analytics?: AnalyticsPoint[];
   isLoadingAnalytics?: boolean;
+}
+
+interface AnalyticsPoint {
+  date: string;
+  clicks: number;
+  mode?: "daily" | "weekly" | "monthly";
+  totalPoints?: number;
 }
 
 const Dashboard = () => {
@@ -160,30 +167,78 @@ const Dashboard = () => {
     const targetUrl = urls.find(u => u.id === id);
     if (targetUrl && !targetUrl.isExpanded && !targetUrl.analytics) {
       // Fetch only if it's being expanded and we don't have data yet
-      await fetchUrlAnalytics(id, shortUrl);
+      await fetchUrlAnalytics(id, shortUrl, targetUrl.createdDate);
     }
   };
 
-  const fetchUrlAnalytics = async (id: number, shortUrl: string) => {
+  const bucketAnalytics = (points: AnalyticsPoint[]) => {
+    if (points.length <= 45) {
+      return { data: points, mode: "daily" as const };
+    }
+
+    const mode = points.length <= 180 ? "weekly" as const : "monthly" as const;
+    const grouped = new Map<string, number>();
+
+    points.forEach((point) => {
+      const bucketDate = mode === "weekly"
+        ? dayjs(point.date).startOf("week").format("YYYY-MM-DD")
+        : dayjs(point.date).startOf("month").format("YYYY-MM-DD");
+
+      grouped.set(bucketDate, (grouped.get(bucketDate) || 0) + point.clicks);
+    });
+
+    const data = Array.from(grouped.entries())
+      .map(([date, clicks]) => ({ date, clicks }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    return { data, mode };
+  };
+
+  const formatAnalyticsLabel = (value: string, mode: AnalyticsPoint["mode"] = "daily") => {
+    if (mode === "monthly") return dayjs(value).format("MMM YYYY");
+    return dayjs(value).format("DD MMM");
+  };
+
+  const formatTooltipLabel = (value: string, mode: AnalyticsPoint["mode"] = "daily") => {
+    if (mode === "monthly") return dayjs(value).format("MMMM YYYY");
+    if (mode === "weekly") {
+      const start = dayjs(value);
+      return `${start.format("MMM DD")} - ${start.add(6, "day").format("MMM DD, YYYY")}`;
+    }
+    return dayjs(value).format("MMM DD, YYYY");
+  };
+
+  const getAnalyticsCaption = (mode: AnalyticsPoint["mode"], totalPoints: number) => {
+    if (mode === "monthly") return `All-time view grouped by month from ${totalPoints} daily records`;
+    if (mode === "weekly") return `All-time view grouped by week from ${totalPoints} daily records`;
+    return "All-time daily view";
+  };
+
+  const fetchUrlAnalytics = async (id: number, shortUrl: string, createdDate: string) => {
     setUrls(prev => prev.map(url => 
       url.id === id ? { ...url, isLoadingAnalytics: true } : url
     ));
 
     try {
-      // Get last 7 days + 1 for context
       const endDate = dayjs().format("YYYY-MM-DDTHH:mm:ss");
-      const startDate = dayjs().subtract(7, 'day').format("YYYY-MM-DDTHH:mm:ss");
+      const startDate = dayjs(createdDate).startOf("day").format("YYYY-MM-DDTHH:mm:ss");
       
       const response = await api.get(`/api/urls/analytics/${shortUrl}`, {
         params: { startDate, endDate },
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Backend returns List<ClickEventDTO> with count and clickDate
-      const chartData = response.data.map((item: any) => ({
+      const rawChartData: AnalyticsPoint[] = response.data.map((item: any) => ({
         date: item.clickDate,
         clicks: item.count,
       })).sort((a: any, b: any) => a.date.localeCompare(b.date));
+
+      const { data, mode } = bucketAnalytics(rawChartData);
+      const chartData = data.map((point) => ({
+        ...point,
+        mode,
+        totalPoints: rawChartData.length,
+      }));
 
       setUrls(prev => prev.map(url => 
         url.id === id ? { ...url, analytics: chartData, isLoadingAnalytics: false } : url
@@ -198,9 +253,10 @@ const Dashboard = () => {
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const mode = payload[0]?.payload?.mode;
       return (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 rounded-lg shadow-lg text-[11px]">
-          <p className="font-semibold text-slate-500 dark:text-slate-400 mb-1">{dayjs(label).format("MMM DD, YYYY")}</p>
+          <p className="font-semibold text-slate-500 dark:text-slate-400 mb-1">{formatTooltipLabel(label, mode)}</p>
           <p className="text-brand-purple font-bold flex items-center gap-1">
             <MousePointer2 size={10} /> {payload[0].value} clicks
           </p>
@@ -510,10 +566,17 @@ const Dashboard = () => {
                           >
                             <div className="p-5 overflow-hidden">
                               <div className="flex items-center justify-between mb-4">
-                                <h4 className="text-sm font-semibold flex items-center gap-2">
-                                  <BarChart3 size={16} className="text-brand-purple" />
-                                  Link Performance (Last 7 Days)
-                                </h4>
+                                <div>
+                                  <h4 className="text-sm font-semibold flex items-center gap-2">
+                                    <BarChart3 size={16} className="text-brand-purple" />
+                                    Link Performance (All Time)
+                                  </h4>
+                                  {url.analytics && url.analytics.length > 0 && (
+                                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                      {getAnalyticsCaption(url.analytics[0].mode, url.analytics[0].totalPoints || url.analytics.length)}
+                                    </p>
+                                  )}
+                                </div>
                               </div>
                               
                               {url.isLoadingAnalytics ? (
@@ -524,11 +587,11 @@ const Dashboard = () => {
                               ) : url.analytics && url.analytics.length > 0 ? (
                                 <div className="h-[200px]">
                                   <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={url.analytics}>
+                                    <AreaChart data={url.analytics}>
                                       <defs>
                                         <linearGradient id={`grad-${url.id}`} x1="0" y1="0" x2="0" y2="1">
                                           <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.8}/>
-                                          <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.8}/>
+                                          <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.08}/>
                                         </linearGradient>
                                       </defs>
                                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground)/.1)" />
@@ -537,24 +600,32 @@ const Dashboard = () => {
                                         axisLine={false}
                                         tickLine={false}
                                         tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                                        tickFormatter={(value) => dayjs(value).format("MMM DD")}
+                                        minTickGap={24}
+                                        tickFormatter={(value) => formatAnalyticsLabel(value, url.analytics?.[0]?.mode)}
                                       />
                                       <YAxis 
                                         axisLine={false}
                                         tickLine={false}
                                         tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                                        allowDecimals={false}
                                       />
                                       <Tooltip 
-                                        cursor={{fill: 'hsl(var(--muted-foreground)/.05)'}}
+                                        cursor={{ stroke: "hsl(var(--muted-foreground)/.15)", strokeWidth: 1 }}
                                         content={<CustomTooltip />}
                                       />
-                                      <Bar dataKey="clicks" fill={`url(#grad-${url.id})`} radius={[4, 4, 0, 0]} barSize={25} />
-                                    </BarChart>
+                                      <Area
+                                        type="monotone"
+                                        dataKey="clicks"
+                                        stroke="#7C3AED"
+                                        strokeWidth={2.5}
+                                        fill={`url(#grad-${url.id})`}
+                                      />
+                                    </AreaChart>
                                   </ResponsiveContainer>
                                 </div>
                               ) : (
                                 <div className="h-[100px] flex items-center justify-center text-slate-400 text-sm italic">
-                                  No click data recorded for this period yet.
+                                  No click data recorded for this link yet.
                                 </div>
                               )}
                             </div>
