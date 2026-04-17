@@ -65,7 +65,7 @@ const Dashboard = () => {
   const [qrTheme, setQrTheme] = useState("default");
   const [qrLogoSize, setQrLogoSize] = useState([3]);
 
-  const qrRef = React.useRef<HTMLDivElement>(null);
+  const [qrRefElement, setQrRefElement] = useState<HTMLDivElement | null>(null);
   const [qrCodeStyling] = useState<QRCodeStyling>(new QRCodeStyling({
     width: 240,
     height: 240,
@@ -105,12 +105,11 @@ const Dashboard = () => {
       }
     });
     
-    if (isQrDialogOpen && qrRef.current) {
-      if (qrRef.current.children.length === 0) {
-        qrCodeStyling.append(qrRef.current);
-      }
+    if (isQrDialogOpen && qrRefElement) {
+      qrRefElement.innerHTML = "";
+      qrCodeStyling.append(qrRefElement);
     }
-  }, [qrUrl, qrFgColor, qrBgColor, qrSize, qrLogoSize, qrLogo, qrDotsType, qrCornersType, qrShape, qrCodeStyling, isQrDialogOpen]);
+  }, [qrUrl, qrFgColor, qrBgColor, qrSize, qrLogoSize, qrLogo, qrDotsType, qrCornersType, qrShape, qrCodeStyling, isQrDialogOpen, qrRefElement]);
 
   const applyTheme = (theme: string) => {
     setQrTheme(theme);
@@ -583,12 +582,9 @@ const Dashboard = () => {
                <div 
                  className="p-8 rounded-2xl shadow-xl transition-all duration-300 overflow-hidden flex items-center justify-center"
                  style={{ backgroundColor: qrBgColor, width: 304, height: 304 }}
-               >
-                 {qrUrl && (
-                    <div ref={qrRef} id={`qr-code-${qrUrl.split('/').pop()}`} className="w-[240px] h-[240px] flex items-center justify-center" />
-                  )}
-               </div>
-               
+                >
+                  <div ref={setQrRefElement} id="qr-code-preview" className="w-[240px] h-[240px] flex items-center justify-center" />
+                </div>
                <div className="mt-8 text-xs text-slate-400 max-w-[240px] text-center">
                  Customized for {qrUrl?.split('/').pop()}
                </div>
