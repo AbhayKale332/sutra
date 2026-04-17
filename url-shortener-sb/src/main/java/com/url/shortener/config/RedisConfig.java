@@ -16,6 +16,7 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
+import java.util.Map;
 
 @Slf4j
 @Configuration
@@ -23,7 +24,7 @@ public class RedisConfig implements CachingConfigurer {
 
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(10))
                 .serializeValuesWith(
                         RedisSerializationContext.SerializationPair.fromSerializer(
@@ -32,8 +33,12 @@ public class RedisConfig implements CachingConfigurer {
                 )
                 .disableCachingNullValues();
 
+        // Keep hot short URL mappings in Redis until memory pressure requires cleanup.
+        RedisCacheConfiguration shortUrlCacheConfig = defaultConfig.entryTtl(Duration.ZERO);
+
         return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(config)
+                .cacheDefaults(defaultConfig)
+                .withInitialCacheConfigurations(Map.of("shortUrls", shortUrlCacheConfig))
                 .build();
     }
 
