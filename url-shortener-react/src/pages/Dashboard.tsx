@@ -10,7 +10,8 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import dayjs from "dayjs";
-import { QRCodeSVG } from "qrcode.react";
+import QRCodeStyling, { DotType, CornerSquareType } from "qr-code-styling";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from "recharts";
@@ -56,6 +57,47 @@ const Dashboard = () => {
   const [qrBgColor, setQrBgColor] = useState("#ffffff");
   const [qrSize, setQrSize] = useState(256);
   const [qrLogo, setQrLogo] = useState<string | null>(null);
+  const [qrDotsType, setQrDotsType] = useState<DotType>("dots");
+  const [qrCornersType, setQrCornersType] = useState<CornerSquareType>("extra-rounded");
+
+  const qrRef = React.useRef<HTMLDivElement>(null);
+  const [qrCodeStyling] = useState<QRCodeStyling>(new QRCodeStyling({
+    width: 240,
+    height: 240,
+    imageOptions: {
+      crossOrigin: "anonymous",
+      margin: 10
+    }
+  }));
+
+  useEffect(() => {
+    qrCodeStyling.update({
+      data: qrUrl || "https://sutra.link",
+      width: 240,
+      height: 240,
+      dotsOptions: {
+        type: qrDotsType,
+        color: qrFgColor,
+      },
+      cornersSquareOptions: {
+        type: qrCornersType,
+        color: qrFgColor,
+      },
+      cornersDotOptions: {
+        type: qrCornersType === "extra-rounded" ? "dot" : "square",
+        color: qrFgColor,
+      },
+      backgroundOptions: {
+        color: qrBgColor, // In preview, keep transparent or bg color
+      },
+      image: qrLogo || undefined,
+    });
+    
+    if (qrRef.current) {
+      qrRef.current.innerHTML = "";
+      qrCodeStyling.append(qrRef.current);
+    }
+  }, [qrUrl, qrFgColor, qrBgColor, qrSize, qrLogo, qrDotsType, qrCornersType, qrCodeStyling]);
 
   const fetchUrls = async () => {
     try {
@@ -180,39 +222,19 @@ const Dashboard = () => {
     }
   };
 
-  const downloadQRCode = (shortUrl: string) => {
-    const svg = document.getElementById(`qr-code-${shortUrl}`);
-    if (!svg) return;
-
-    // Use a temporary canvas to render the high-res version
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const img = new Image();
-
-    // Scale canvas to user-defined high resolution (qrSize)
-    const scale = qrSize / 200; // Original SVG size is 200 in the UI
-
-    img.onload = () => {
-      canvas.width = qrSize + 80; // Add padding
-      canvas.height = qrSize + 80;
-      if (ctx) {
-        ctx.fillStyle = qrBgColor;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Final draw with high resolution
-        ctx.drawImage(img, 40, 40, qrSize, qrSize);
-        
-        const pngFile = canvas.toDataURL("image/png", 1.0);
-        const downloadLink = document.createElement("a");
-        downloadLink.download = `qr-sutra-${shortUrl}.png`;
-        downloadLink.href = pngFile;
-        downloadLink.click();
-      }
-    };
-    // Ensure all styles are captured in the blob
-    const encodedSVG = btoa(unescape(encodeURIComponent(svgData)));
-    img.src = "data:image/svg+xml;base64," + encodedSVG;
+  const downloadQRCode = async (shortUrl: string) => {
+    const tempQr = new QRCodeStyling({
+      data: qrUrl || "https://sutra.link",
+      width: qrSize,
+      height: qrSize,
+      dotsOptions: { type: qrDotsType, color: qrFgColor },
+      cornersSquareOptions: { type: qrCornersType, color: qrFgColor },
+      cornersDotOptions: { type: qrCornersType === "extra-rounded" ? "dot" : "square", color: qrFgColor },
+      backgroundOptions: { color: qrBgColor },
+      image: qrLogo || undefined,
+      imageOptions: { crossOrigin: "anonymous", margin: 10 }
+    });
+    await tempQr.download({ name: `qr-sutra-${shortUrl}`, extension: "png" });
   };
 
   return (
@@ -490,27 +512,11 @@ const Dashboard = () => {
                </div>
                
                <div 
-                 className="p-8 rounded-2xl shadow-xl transition-all duration-300"
-                 style={{ backgroundColor: qrBgColor }}
+                 className="p-8 rounded-2xl shadow-xl transition-all duration-300 overflow-hidden flex items-center justify-center"
+                 style={{ backgroundColor: qrBgColor, width: 304, height: 304 }}
                >
                  {qrUrl && (
-                    <QRCodeSVG 
-                      id={`qr-code-${qrUrl.split('/').pop()}`}
-                      value={qrUrl} 
-                      size={240}
-                      level="H"
-                      fgColor={qrFgColor}
-                      bgColor={qrBgColor}
-                      includeMargin={false}
-                      imageSettings={qrLogo ? {
-                        src: qrLogo,
-                        x: undefined,
-                        y: undefined,
-                        height: 50,
-                        width: 50,
-                        excavate: true,
-                      } : undefined}
-                    />
+                    <div ref={qrRef} id={`qr-code-${qrUrl.split('/').pop()}`} className="w-[240px] h-[240px] flex items-center justify-center" />
                   )}
                </div>
                
@@ -538,6 +544,41 @@ const Dashboard = () => {
                 </TabsList>
                 
                 <TabsContent value="style" className="space-y-6">
+                   <div className="space-y-3">
+                     <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Shape Options</Label>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                           <Label className="text-xs text-slate-500">Pattern</Label>
+                           <Select value={qrDotsType} onValueChange={(val) => setQrDotsType(val as DotType)}>
+                             <SelectTrigger className="w-full text-xs h-10 bg-slate-50 dark:bg-slate-900 border-none">
+                               <SelectValue placeholder="Select Pattern" />
+                             </SelectTrigger>
+                             <SelectContent>
+                               <SelectItem value="square">Square</SelectItem>
+                               <SelectItem value="dots">Dots</SelectItem>
+                               <SelectItem value="rounded">Rounded</SelectItem>
+                               <SelectItem value="extra-rounded">Extra Rounded</SelectItem>
+                               <SelectItem value="classy">Classy</SelectItem>
+                               <SelectItem value="classy-rounded">Classy Rounded</SelectItem>
+                             </SelectContent>
+                           </Select>
+                        </div>
+                        <div className="space-y-2">
+                           <Label className="text-xs text-slate-500">Corners</Label>
+                           <Select value={qrCornersType} onValueChange={(val) => setQrCornersType(val as CornerSquareType)}>
+                             <SelectTrigger className="w-full text-xs h-10 bg-slate-50 dark:bg-slate-900 border-none">
+                               <SelectValue placeholder="Select Corners" />
+                             </SelectTrigger>
+                             <SelectContent>
+                               <SelectItem value="square">Square</SelectItem>
+                               <SelectItem value="dot">Dot</SelectItem>
+                               <SelectItem value="extra-rounded">Extra Rounded</SelectItem>
+                             </SelectContent>
+                           </Select>
+                        </div>
+                     </div>
+                   </div>
+
                    <div className="space-y-3">
                      <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Colors</Label>
                      <div className="grid grid-cols-2 gap-4">
