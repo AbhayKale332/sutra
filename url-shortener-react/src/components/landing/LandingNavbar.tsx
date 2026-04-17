@@ -1,17 +1,15 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, Link2, LogOut } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Menu, X, LogOut } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { DotLottieReact } from "@lottiefiles/dotlottie-react";
-import linkLottie from "../../assets/lottie/Url Link.lottie";
+import BrandMark from "@/components/BrandMark";
 
 const LandingNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated, logout } = useAuth();
-  const navigate = useNavigate();
 
   const navLinks = [
     { to: "/", label: "Home" },
@@ -28,10 +26,7 @@ const LandingNavbar = () => {
     >
       <div className="container mx-auto flex items-center justify-between px-6 py-4">
         <Link to="/" className="text-2xl font-bold text-primary-foreground tracking-tight flex items-center gap-1.5 focus:outline-none h-full">
-          <div className="w-16 h-16">
-            <DotLottieReact src={linkLottie} loop autoplay />
-          </div>
-          Sutra
+          <BrandMark textClassName="text-primary-foreground" iconClassName="text-primary-foreground" />
         </Link>
         <div className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (

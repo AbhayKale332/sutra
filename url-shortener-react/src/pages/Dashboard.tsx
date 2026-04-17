@@ -25,10 +25,8 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import ThemeToggle from "@/components/ThemeToggle";
 import BackendStatus from "@/components/BackendStatus";
-
-import { DotLottieReact } from "@lottiefiles/dotlottie-react";
-import linkLottie from "../assets/lottie/Url Link.lottie";
 import loadingLottie from "../assets/lottie/Circle Shape Morphing animation.lottie";
+import BrandMark from "@/components/BrandMark";
 
 interface UrlMapping {
   id: number;
@@ -311,10 +309,11 @@ const Dashboard = () => {
       <nav className="border-b bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 sticky top-0 z-40">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="text-xl font-bold tracking-tight flex items-center gap-2 text-brand-purple focus:outline-none h-full">
-            <div className="w-16 h-16">
-              <DotLottieReact src={linkLottie} loop autoplay />
-            </div>
-            Sutra
+            <BrandMark
+              className="gap-3"
+              textClassName="text-brand-purple"
+              iconClassName="bg-brand-purple/10 text-brand-purple ring-brand-purple/15"
+            />
           </Link>
           <div className="flex items-center gap-4">
             <ThemeToggle className="text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800" />
