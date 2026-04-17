@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import dayjs from "dayjs";
-import QRCodeStyling, { DotType, CornerSquareType } from "qr-code-styling";
+import QRCodeStyling, { DotType, CornerSquareType, ShapeType } from "qr-code-styling";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
@@ -50,6 +50,7 @@ const Dashboard = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [totalClicks, setTotalClicks] = useState<any[]>([]);
   const [qrUrl, setQrUrl] = useState<string | null>(null);
+  const [qrOriginalUrl, setQrOriginalUrl] = useState<string | null>(null);
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
   
   // QR Studio Customization States
@@ -59,6 +60,7 @@ const Dashboard = () => {
   const [qrLogo, setQrLogo] = useState<string | null>(null);
   const [qrDotsType, setQrDotsType] = useState<DotType>("dots");
   const [qrCornersType, setQrCornersType] = useState<CornerSquareType>("extra-rounded");
+  const [qrShape, setQrShape] = useState<ShapeType>("square");
 
   const qrRef = React.useRef<HTMLDivElement>(null);
   const [qrCodeStyling] = useState<QRCodeStyling>(new QRCodeStyling({
@@ -75,6 +77,7 @@ const Dashboard = () => {
       data: qrUrl || "https://sutra.link",
       width: 240,
       height: 240,
+      shape: qrShape,
       dotsOptions: {
         type: qrDotsType,
         color: qrFgColor,
@@ -97,7 +100,7 @@ const Dashboard = () => {
       qrRef.current.innerHTML = "";
       qrCodeStyling.append(qrRef.current);
     }
-  }, [qrUrl, qrFgColor, qrBgColor, qrSize, qrLogo, qrDotsType, qrCornersType, qrCodeStyling]);
+  }, [qrUrl, qrFgColor, qrBgColor, qrSize, qrLogo, qrDotsType, qrCornersType, qrShape, qrCodeStyling]);
 
   const fetchUrls = async () => {
     try {
@@ -227,6 +230,7 @@ const Dashboard = () => {
       data: qrUrl || "https://sutra.link",
       width: qrSize,
       height: qrSize,
+      shape: qrShape,
       dotsOptions: { type: qrDotsType, color: qrFgColor },
       cornersSquareOptions: { type: qrCornersType, color: qrFgColor },
       cornersDotOptions: { type: qrCornersType === "extra-rounded" ? "dot" : "square", color: qrFgColor },
@@ -235,6 +239,28 @@ const Dashboard = () => {
       imageOptions: { crossOrigin: "anonymous", margin: 10 }
     });
     await tempQr.download({ name: `qr-sutra-${shortUrl}`, extension: "png" });
+  };
+
+  const downloadSpotifyCode = async (originalUrl: string) => {
+    const match = originalUrl.match(/open\.spotify\.com\/(track|album|artist|playlist|episode|show)\/([a-zA-Z0-9]+)/);
+    if (!match) return;
+    const spotifyUri = `spotify:${match[1]}:${match[2]}`;
+    const colorBg = qrBgColor.replace("#", "");
+    const colorFg = qrFgColor.replace("#", "");
+    const scdnUrl = `https://scannables.scdn.co/uri/default/png/${colorBg}/${colorFg}/640/${spotifyUri}`;
+    
+    try {
+      const response = await fetch(scdnUrl);
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = `spotify-code-${match[2]}.png`;
+      a.click();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (e) {
+      window.open(scdnUrl, '_blank');
+    }
   };
 
   return (
@@ -406,7 +432,7 @@ const Dashboard = () => {
                               <Button size="icon" variant="ghost" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); copyToClipboard(url.shortUrl); }}>
                                 <Copy size={16} />
                               </Button>
-                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setQrUrl(`${window.location.protocol}//${window.location.host}/s/${url.shortUrl}`); setIsQrDialogOpen(true); }}>
+                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setQrOriginalUrl(url.originalUrl); setQrUrl(`${window.location.protocol}//${window.location.host}/s/${url.shortUrl}`); setIsQrDialogOpen(true); }}>
                                 <QrCode size={16} />
                               </Button>
                               <a href={`${window.location.protocol}//${window.location.host}/s/${url.shortUrl}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
@@ -523,6 +549,21 @@ const Dashboard = () => {
                <div className="mt-8 text-xs text-slate-400 max-w-[240px] text-center">
                  Customized for {qrUrl?.split('/').pop()}
                </div>
+               
+               {qrOriginalUrl && qrOriginalUrl.includes("spotify.com") && (
+                 <div className="mt-6 p-4 w-full max-w-[280px] bg-[#1DB954]/10 border border-[#1DB954]/30 rounded-xl relative overflow-hidden group flex flex-col items-center">
+                   <div className="absolute top-0 left-0 w-1 h-full bg-[#1DB954]"></div>
+                   <h3 className="text-sm font-bold text-[#1DB954] mb-1 flex items-center justify-center gap-1">Spotify Link Detected</h3>
+                   <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 text-center">Get the official soundwave Spotify Code for this track.</p>
+                   <Button 
+                     size="sm" 
+                     className="w-full bg-[#1DB954] hover:bg-[#1ed760] text-black font-semibold text-xs"
+                     onClick={() => downloadSpotifyCode(qrOriginalUrl)}
+                   >
+                     Download Spotify Code
+                   </Button>
+                 </div>
+               )}
             </div>
 
             <div className="w-full md:w-[350px] bg-white dark:bg-slate-950 p-6 flex flex-col">
@@ -546,6 +587,20 @@ const Dashboard = () => {
                 <TabsContent value="style" className="space-y-6">
                    <div className="space-y-3">
                      <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Shape Options</Label>
+                     <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="space-y-2 col-span-2">
+                           <Label className="text-xs text-slate-500">Overall Shape</Label>
+                           <Select value={qrShape} onValueChange={(val) => setQrShape(val as ShapeType)}>
+                             <SelectTrigger className="w-full text-xs h-10 bg-slate-50 dark:bg-slate-900 border-none">
+                               <SelectValue placeholder="Select Shape" />
+                             </SelectTrigger>
+                             <SelectContent>
+                               <SelectItem value="square">Square Frame</SelectItem>
+                               <SelectItem value="circle">Circle Frame</SelectItem>
+                             </SelectContent>
+                           </Select>
+                        </div>
+                     </div>
                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                            <Label className="text-xs text-slate-500">Pattern</Label>
