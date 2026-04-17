@@ -60,8 +60,9 @@ const Dashboard = () => {
   const [qrLogo, setQrLogo] = useState<string | null>(null);
   const [qrDotsType, setQrDotsType] = useState<DotType>("dots");
   const [qrCornersType, setQrCornersType] = useState<CornerSquareType>("extra-rounded");
-  const [qrShape, setQrShape] = useState<ShapeType>("square");
+  const [qrShape, setQrShape] = useState<string>("square");
   const [qrTheme, setQrTheme] = useState("default");
+  const [qrLogoSize, setQrLogoSize] = useState([3]);
 
   const qrRef = React.useRef<HTMLDivElement>(null);
   const [qrCodeStyling] = useState<QRCodeStyling>(new QRCodeStyling({
@@ -74,11 +75,13 @@ const Dashboard = () => {
   }));
 
   useEffect(() => {
+    if (!qrUrl) return;
+
     qrCodeStyling.update({
       data: qrUrl || "https://sutra.link",
       width: 240,
       height: 240,
-      shape: qrShape,
+      shape: qrShape === "circle" ? "circle" : "square",
       dotsOptions: {
         type: qrDotsType,
         color: qrFgColor,
@@ -93,55 +96,49 @@ const Dashboard = () => {
       },
       backgroundOptions: {
         color: qrBgColor, // In preview, keep transparent or bg color
+        round: qrShape === "rounded" ? 0.2 : 0,
       },
       image: qrLogo || undefined,
+      imageOptions: {
+        crossOrigin: "anonymous", 
+        margin: 5,
+        imageSize: qrLogoSize[0] / 10 + 0.1,
+      }
     });
     
     if (isQrDialogOpen && qrRef.current) {
-      qrRef.current.innerHTML = "";
-      qrCodeStyling.append(qrRef.current);
+      if (qrRef.current.children.length === 0) {
+        qrCodeStyling.append(qrRef.current);
+      }
     }
-  }, [qrUrl, qrFgColor, qrBgColor, qrSize, qrLogo, qrDotsType, qrCornersType, qrShape, qrCodeStyling, isQrDialogOpen]);
+  }, [qrUrl, qrFgColor, qrBgColor, qrSize, qrLogoSize, qrLogo, qrDotsType, qrCornersType, qrShape, qrCodeStyling, isQrDialogOpen]);
 
   const applyTheme = (theme: string) => {
     setQrTheme(theme);
     switch (theme) {
-      case "spotify":
-        setQrFgColor("#1DB954");
-        setQrBgColor("#000000");
-        setQrDotsType("classy-rounded");
-        setQrCornersType("extra-rounded");
-        setQrShape("square");
-        break;
-      case "matrix":
-        setQrFgColor("#00FF41");
-        setQrBgColor("#0D0D0D");
-        setQrDotsType("square");
-        setQrCornersType("square");
-        setQrShape("square");
-        break;
+      case "spotify-vibes":
+        setQrBgColor("#1DB954"); setQrFgColor("#000000"); setQrDotsType("dots"); setQrCornersType("extra-rounded"); setQrShape("square"); break;
+      case "dark-luxury":
+        setQrBgColor("#0A0A0A"); setQrFgColor("#FFD700"); setQrDotsType("square"); setQrCornersType("square"); setQrShape("square"); break;
+      case "minimal-paper":
+        setQrBgColor("#F5F5F0"); setQrFgColor("#2D2D2D"); setQrDotsType("rounded"); setQrCornersType("extra-rounded"); setQrShape("square"); break;
+      case "galaxy-purple":
+        setQrBgColor("#764BA2"); setQrFgColor("#FFFFFF"); setQrDotsType("rounded"); setQrCornersType("extra-rounded"); setQrShape("rounded"); break;
+      case "sunrise-bold":
+        setQrBgColor("#FF4500"); setQrFgColor("#FFFFFF"); setQrDotsType("dots"); setQrCornersType("extra-rounded"); setQrShape("square"); break;
       case "cyberpunk":
-        setQrFgColor("#FCEE0A");
-        setQrBgColor("#120458");
-        setQrDotsType("dots");
-        setQrCornersType("extra-rounded");
-        setQrShape("circle");
-        break;
-      case "liquid":
-        setQrFgColor("#FF007F");
-        setQrBgColor("#FFFFFF");
-        setQrDotsType("rounded");
-        setQrCornersType("dot");
-        setQrShape("circle");
-        break;
+        setQrBgColor("#0F1923"); setQrFgColor("#00D4FF"); setQrDotsType("square"); setQrCornersType("square"); setQrShape("square"); break;
+      case "warm-terracotta":
+        setQrBgColor("#FFF8F0"); setQrFgColor("#D4845A"); setQrDotsType("classy-rounded"); setQrCornersType("extra-rounded"); setQrShape("square"); break;
+      case "eco-fresh":
+        setQrBgColor("#E8F5E9"); setQrFgColor("#2E7D32"); setQrDotsType("dots"); setQrCornersType("extra-rounded"); setQrShape("rounded"); break;
+      case "neon-nights":
+        setQrBgColor("#1A1A2E"); setQrFgColor("#E91E8C"); setQrDotsType("classy"); setQrCornersType("extra-rounded"); setQrShape("square"); break;
+      case "vintage-gold":
+        setQrBgColor("#FFFDF7"); setQrFgColor("#8B6914"); setQrDotsType("square"); setQrCornersType("square"); setQrShape("square"); break;
       case "default":
       default:
-        setQrFgColor("#000000");
-        setQrBgColor("#ffffff");
-        setQrDotsType("dots");
-        setQrCornersType("extra-rounded");
-        setQrShape("square");
-        break;
+        setQrBgColor("#ffffff"); setQrFgColor("#000000"); setQrDotsType("square"); setQrCornersType("square"); setQrShape("square"); break;
     }
   };
 
@@ -273,13 +270,17 @@ const Dashboard = () => {
       data: qrUrl || "https://sutra.link",
       width: qrSize,
       height: qrSize,
-      shape: qrShape,
+      shape: qrShape === "circle" ? "circle" : "square",
       dotsOptions: { type: qrDotsType, color: qrFgColor },
       cornersSquareOptions: { type: qrCornersType, color: qrFgColor },
       cornersDotOptions: { type: qrCornersType === "extra-rounded" ? "dot" : "square", color: qrFgColor },
-      backgroundOptions: { color: qrBgColor },
+      backgroundOptions: { color: qrBgColor, round: qrShape === "rounded" ? 0.2 : 0 },
       image: qrLogo || undefined,
-      imageOptions: { crossOrigin: "anonymous", margin: 10 }
+      imageOptions: { 
+        crossOrigin: "anonymous", 
+        margin: 5,
+        imageSize: qrLogoSize[0] / 10 + 0.1,
+      }
     });
     await tempQr.download({ name: `qr-sutra-${shortUrl}`, extension: "png" });
   };
@@ -636,10 +637,16 @@ const Dashboard = () => {
                        </SelectTrigger>
                        <SelectContent>
                          <SelectItem value="default">Default Classic</SelectItem>
-                         <SelectItem value="spotify">Spotify Style (Green/Black)</SelectItem>
-                         <SelectItem value="matrix">Matrix Hacker</SelectItem>
-                         <SelectItem value="cyberpunk">Cyberpunk Neon</SelectItem>
-                         <SelectItem value="liquid">Liquid Pink</SelectItem>
+                         <SelectItem value="spotify-vibes">Spotify Vibes</SelectItem>
+                         <SelectItem value="dark-luxury">Dark Luxury</SelectItem>
+                         <SelectItem value="minimal-paper">Minimal Paper</SelectItem>
+                         <SelectItem value="galaxy-purple">Galaxy Purple</SelectItem>
+                         <SelectItem value="sunrise-bold">Sunrise Bold</SelectItem>
+                         <SelectItem value="cyberpunk">Cyberpunk</SelectItem>
+                         <SelectItem value="warm-terracotta">Warm Terracotta</SelectItem>
+                         <SelectItem value="eco-fresh">Eco Fresh</SelectItem>
+                         <SelectItem value="neon-nights">Neon Nights</SelectItem>
+                         <SelectItem value="vintage-gold">Vintage Gold</SelectItem>
                        </SelectContent>
                      </Select>
                    </div>
@@ -649,12 +656,13 @@ const Dashboard = () => {
                      <div className="grid grid-cols-2 gap-4 mb-4">
                         <div className="space-y-2 col-span-2">
                            <Label className="text-xs text-slate-500">Overall Shape</Label>
-                           <Select value={qrShape} onValueChange={(val) => setQrShape(val as ShapeType)}>
-                             <SelectTrigger className="w-full text-xs h-10 bg-slate-50 dark:bg-slate-900 border-none">
+                           <Select value={qrShape} onValueChange={(val) => setQrShape(val)}>
+                             <SelectTrigger className="w-full text-xs h-10 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-4">
                                <SelectValue placeholder="Select Shape" />
                              </SelectTrigger>
                              <SelectContent>
                                <SelectItem value="square">Square Frame</SelectItem>
+                               <SelectItem value="rounded">Rounded Frame</SelectItem>
                                <SelectItem value="circle">Circle Frame</SelectItem>
                              </SelectContent>
                            </Select>
@@ -664,7 +672,7 @@ const Dashboard = () => {
                         <div className="space-y-2">
                            <Label className="text-xs text-slate-500">Pattern</Label>
                            <Select value={qrDotsType} onValueChange={(val) => setQrDotsType(val as DotType)}>
-                             <SelectTrigger className="w-full text-xs h-10 bg-slate-50 dark:bg-slate-900 border-none">
+                             <SelectTrigger className="w-full text-xs h-10 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-4">
                                <SelectValue placeholder="Select Pattern" />
                              </SelectTrigger>
                              <SelectContent>
@@ -680,7 +688,7 @@ const Dashboard = () => {
                         <div className="space-y-2">
                            <Label className="text-xs text-slate-500">Corners</Label>
                            <Select value={qrCornersType} onValueChange={(val) => setQrCornersType(val as CornerSquareType)}>
-                             <SelectTrigger className="w-full text-xs h-10 bg-slate-50 dark:bg-slate-900 border-none">
+                             <SelectTrigger className="w-full text-xs h-10 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-4">
                                <SelectValue placeholder="Select Corners" />
                              </SelectTrigger>
                              <SelectContent>
@@ -725,7 +733,10 @@ const Dashboard = () => {
                      <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Export Resolution</Label>
                      <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
                         <span>Low Res</span>
-                        <span className="font-bold text-brand-purple">{qrSize}px</span>
+                        <span className="font-bold text-brand-purple flex items-center">
+                           {qrSize}px 
+                           <Badge variant="secondary" className="ml-2 text-[10px] scale-90 bg-brand-purple/10 text-brand-purple hover:bg-brand-purple/20">High Res</Badge>
+                        </span>
                         <span>High Res</span>
                      </div>
                      <Slider 
@@ -739,7 +750,24 @@ const Dashboard = () => {
                    </div>
                 </TabsContent>
 
-                <TabsContent value="logo" className="space-y-6">
+                 <TabsContent value="logo" className="space-y-6">
+                   <div className="space-y-3">
+                     <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Logo Size</Label>
+                     <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                        <span>0</span>
+                        <span className="font-bold text-brand-purple px-3 py-1 bg-brand-purple/10 rounded-full">{qrLogoSize[0]}px</span>
+                        <span>6</span>
+                     </div>
+                     <Slider 
+                        value={qrLogoSize} 
+                        onValueChange={(val) => setQrLogoSize(val)}
+                        min={0} 
+                        max={6} 
+                        step={1}
+                        className="py-4"
+                     />
+                   </div>
+
                    <div className="space-y-3">
                      <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Logo Centerpiece</Label>
                      <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-6 flex flex-col items-center justify-center gap-3">
