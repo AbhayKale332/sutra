@@ -38,24 +38,23 @@ public class ClickBufferService {
     private final RedisTemplate<String, String> redisTemplate;
 
     /**
-     * Hot path — called on every redirect.
-     * Pipelines two Redis commands: INCR counter + SADD tracking set.
-     * Memory cost is constant (~15 bytes) regardless of click volume.
+     * Hot path — called on every redirect (from a background thread via @Async).
+     * All 4 Redis commands are pipelined into a single network round-trip.
      */
     public void recordClick(String shortUrl) {
         String countKey = COUNT_KEY_PREFIX + shortUrl;
+        long ttlSeconds = KEY_TTL.getSeconds();
 
+        // Single round-trip: INCR + SADD + EXPIRE(count) + EXPIRE(tracked)
         redisTemplate.executePipelined((org.springframework.data.redis.connection.RedisConnection conn) -> {
-            // Increment the pending-click counter for this URL
-            conn.stringCommands().incr(countKey.getBytes());
-            // Mark this URL as having un-synced clicks
-            conn.setCommands().sAdd(TRACKED_SET_KEY.getBytes(), shortUrl.getBytes());
+            byte[] countKeyBytes  = countKey.getBytes();
+            byte[] trackedKeyBytes = TRACKED_SET_KEY.getBytes();
+            conn.stringCommands().incr(countKeyBytes);
+            conn.setCommands().sAdd(trackedKeyBytes, shortUrl.getBytes());
+            conn.keyCommands().expire(countKeyBytes,  ttlSeconds);
+            conn.keyCommands().expire(trackedKeyBytes, ttlSeconds);
             return null;
         });
-
-        // Rolling TTL — keys auto-delete 24 h after the last click if sync dies
-        redisTemplate.expire(countKey, KEY_TTL);
-        redisTemplate.expire(TRACKED_SET_KEY, KEY_TTL);
 
         log.debug("Buffered click for '{}'", shortUrl);
     }

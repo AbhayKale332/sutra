@@ -9,6 +9,7 @@ import com.url.shortener.repository.ClickEventRepository;
 import com.url.shortener.repository.UrlMappingRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -103,18 +104,20 @@ public class UrlMappingService {
 
     /**
      * Hot path — called on every redirect.
-     * Only reads from MySQL (or hits the @Cacheable shortUrls cache);
-     * the click is recorded asynchronously in Redis by ClickBufferService.
+     * Caches only the destination URL string (not the full entity) —
+     * tiny JSON payload means ultra-fast cache hits.
      */
     @Cacheable(value = "shortUrls", key = "#shortUrl")
-    public UrlMapping getOriginalUrl(String shortUrl) {
-        return urlMappingRepository.findByShortUrl(shortUrl);
+    public String getOriginalUrl(String shortUrl) {
+        UrlMapping mapping = urlMappingRepository.findByShortUrl(shortUrl);
+        return mapping != null ? mapping.getOriginalUrl() : null;
     }
 
     /**
-     * Called by RedirectController after getOriginalUrl returns.
-     * Enqueues the click in Redis — returns in ~1ms, no MySQL involved.
+     * Async — runs in a background thread so the 302 response is sent
+     * to the user BEFORE any Redis I/O happens. Zero wait time.
      */
+    @Async
     public void recordClick(String shortUrl) {
         clickBufferService.recordClick(shortUrl);
     }

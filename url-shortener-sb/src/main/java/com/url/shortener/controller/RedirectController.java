@@ -1,6 +1,5 @@
 package com.url.shortener.controller;
 
-import com.url.shortener.models.UrlMapping;
 import com.url.shortener.service.UrlMappingService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -22,13 +21,13 @@ public class RedirectController {
 
     @GetMapping("/{shortUrl}")
     public ResponseEntity<Void> redirect(@PathVariable String shortUrl) {
-        UrlMapping urlMapping = urlMappingService.getOriginalUrl(shortUrl);
-        if (urlMapping != null) {
-            // Buffer the click in Redis — no MySQL write on the hot path
+        String originalUrl = urlMappingService.getOriginalUrl(shortUrl);
+        if (originalUrl != null) {
+            // Fire-and-forget: runs in background thread, 302 is sent immediately
             urlMappingService.recordClick(shortUrl);
 
             HttpHeaders httpHeaders = new HttpHeaders();
-            httpHeaders.add("Location", urlMapping.getOriginalUrl());
+            httpHeaders.add("Location", originalUrl);
             return ResponseEntity.status(302).headers(httpHeaders).build();
         } else {
             return ResponseEntity.notFound().build();
