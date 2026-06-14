@@ -28,9 +28,11 @@ export const BackendStatusProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     checkStatus();
-    const interval = setInterval(checkStatus, 30000); // Check every 30 seconds
+    // Poll aggressively while not yet online, relax once connected
+    const pollMs = status === 'online' ? 30000 : 5000;
+    const interval = setInterval(checkStatus, pollMs);
     return () => clearInterval(interval);
-  }, []);
+  }, [status]);
 
   return (
     <BackendStatusContext.Provider value={{ status, isBackendDown: status === 'offline' }}>

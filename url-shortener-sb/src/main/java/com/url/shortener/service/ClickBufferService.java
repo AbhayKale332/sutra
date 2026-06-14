@@ -45,18 +45,22 @@ public class ClickBufferService {
         String countKey = COUNT_KEY_PREFIX + shortUrl;
         long ttlSeconds = KEY_TTL.getSeconds();
 
-        // Single round-trip: INCR + SADD + EXPIRE(count) + EXPIRE(tracked)
-        redisTemplate.executePipelined((org.springframework.data.redis.connection.RedisConnection conn) -> {
-            byte[] countKeyBytes  = countKey.getBytes();
-            byte[] trackedKeyBytes = TRACKED_SET_KEY.getBytes();
-            conn.stringCommands().incr(countKeyBytes);
-            conn.setCommands().sAdd(trackedKeyBytes, shortUrl.getBytes());
-            conn.keyCommands().expire(countKeyBytes,  ttlSeconds);
-            conn.keyCommands().expire(trackedKeyBytes, ttlSeconds);
-            return null;
-        });
+        try {
+            // Single round-trip: INCR + SADD + EXPIRE(count) + EXPIRE(tracked)
+            redisTemplate.executePipelined((org.springframework.data.redis.connection.RedisConnection conn) -> {
+                byte[] countKeyBytes  = countKey.getBytes();
+                byte[] trackedKeyBytes = TRACKED_SET_KEY.getBytes();
+                conn.stringCommands().incr(countKeyBytes);
+                conn.setCommands().sAdd(trackedKeyBytes, shortUrl.getBytes());
+                conn.keyCommands().expire(countKeyBytes, ttlSeconds);
+                conn.keyCommands().expire(trackedKeyBytes, ttlSeconds);
+                return null;
+            });
 
-        log.debug("Buffered click for '{}'", shortUrl);
+            log.debug("Buffered click for '{}'", shortUrl);
+        } catch (RuntimeException e) {
+            log.error("Redis click buffer write failed for '{}': {}", shortUrl, e.getMessage(), e);
+        }
     }
 
     // ── Drain helpers called by ClickSyncService ───────────────────────────
