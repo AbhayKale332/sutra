@@ -105,14 +105,33 @@ const RenderSplashScreen: React.FC<RenderSplashScreenProps> = ({ status, childre
             {/* Main content container */}
             <div className="splash-content">
 
-              {/* Hypnotic checkerboard loader */}
-              <motion.div
-                className="splash-loader-wrapper"
-                animate={isOnline ? { scale: [1, 0], opacity: [1, 0] } : {}}
-                transition={{ duration: 0.4, delay: 0.2 }}
-              >
-                <div className={`loader ${isOnline ? 'loader--done' : ''}`} />
-              </motion.div>
+              {/* Loader area */}
+              <div className="splash-loader-wrapper">
+                <AnimatePresence mode="wait">
+                  {!isOnline ? (
+                    <motion.div
+                      key="loader"
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <div className="loader" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="checkmark"
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+                      className="splash-checkmark-wrapper"
+                    >
+                      <svg className="splash-checkmark" viewBox="0 0 52 52">
+                        <circle className="splash-checkmark-circle" cx="26" cy="26" r="24" fill="none" />
+                        <path className="splash-checkmark-check" fill="none" d="M14 27l7 7 16-16" />
+                      </svg>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
               {/* Brand */}
               <motion.h1

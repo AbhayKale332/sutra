@@ -17,8 +17,8 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-/** Inner component — must be inside BackendStatusProvider to call useBackendStatus */
-const AppContent = () => {
+/** Main pages wrapped in the splash-screen gate */
+const SplashGatedRoutes = () => {
   const { status } = useBackendStatus();
 
   return (
@@ -27,21 +27,18 @@ const AppContent = () => {
         <Toaster />
         <Sonner />
         <BackendStatusBanner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/s/:shortUrl" element={<RedirectHandler />} />
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-            {/* Protected Routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-            </Route>
+          {/* Protected Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+          </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </TooltipProvider>
     </RenderSplashScreen>
   );
@@ -51,10 +48,19 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <BackendStatusProvider>
-        <AppContent />
+        <BrowserRouter>
+          <Routes>
+            {/* Redirect route — NO splash screen, fires immediately */}
+            <Route path="/s/:shortUrl" element={<RedirectHandler />} />
+
+            {/* All other routes — gated behind the splash screen */}
+            <Route path="/*" element={<SplashGatedRoutes />} />
+          </Routes>
+        </BrowserRouter>
       </BackendStatusProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
 
 export default App;
+
