@@ -55,13 +55,24 @@ public class RedisShortUrlCacheEvictionService {
             return;
         }
 
+        try {
+            runCleanup();
+        } catch (RuntimeException e) {
+            // Redis being unreachable must not turn a housekeeping job into a
+            // recurring stack trace. Memory pressure is Redis-side anyway, so
+            // there is nothing to clean when Redis is gone.
+            log.warn("Redis cache cleanup skipped, Redis unavailable: {}", e.getMessage());
+        }
+    }
+
+    private void runCleanup() {
         long usedMemory = getUsedMemoryBytes();
         if (usedMemory < 0 || usedMemory <= memoryThresholdBytes) {
             return;
         }
 
         List<CacheKeyIdleTime> evictionCandidates = loadEvictionCandidates();
-        if (evictionCandidates.isEmpty()) {
+        if (evictionCandidates == null || evictionCandidates.isEmpty()) {
             log.warn("Redis cache cleanup: used_memory={} bytes but found no '{}' cache keys to evict",
                     usedMemory, cacheName);
             return;
@@ -112,9 +123,15 @@ public class RedisShortUrlCacheEvictionService {
         });
     }
 
+    /** Returns -1 when the figure cannot be read, which callers treat as "do nothing". */
     private long getUsedMemoryBytes() {
-        Long usedMemory = redisTemplate.execute((RedisCallback<Long>) connection -> extractUsedMemory(connection));
-        return usedMemory == null ? -1L : usedMemory;
+        try {
+            Long usedMemory = redisTemplate.execute((RedisCallback<Long>) connection -> extractUsedMemory(connection));
+            return usedMemory == null ? -1L : usedMemory;
+        } catch (RuntimeException e) {
+            log.warn("Redis cache cleanup: could not read used_memory: {}", e.getMessage());
+            return -1L;
+        }
     }
 
     private long extractUsedMemory(RedisConnection connection) {

@@ -1,106 +1,290 @@
-# Sutra (URL Shortener)
+<div align="center">
 
-Sutra is a full-stack URL shortener with authentication, analytics, Redis-backed redirect optimization, and a customizable QR Studio for every generated short link.
+<img src="https://img.icons8.com/fluency/96/link.png" alt="Sutra logo" width="88" height="88" />
+
+# Sutra
+
+### A full stack URL shortener with authentication, live analytics, Redis backed redirects, and a customizable QR Studio.
+
+<p>
+<img alt="Java" src="https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" />
+<img alt="Spring Boot" src="https://img.shields.io/badge/Spring_Boot-3-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" />
+<img alt="React" src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black" />
+<img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+<img alt="MySQL" src="https://img.shields.io/badge/MySQL-8-4479A1?style=for-the-badge&logo=mysql&logoColor=white" />
+<img alt="Redis" src="https://img.shields.io/badge/Redis-Cache-DC382D?style=for-the-badge&logo=redis&logoColor=white" />
+</p>
+
+<p>
+<img alt="Vite" src="https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white" />
+<img alt="Tailwind CSS" src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" />
+<img alt="shadcn/ui" src="https://img.shields.io/badge/shadcn--ui-000000?style=flat-square&logo=shadcnui&logoColor=white" />
+<img alt="Framer Motion" src="https://img.shields.io/badge/Framer_Motion-0055FF?style=flat-square&logo=framer&logoColor=white" />
+<img alt="JWT" src="https://img.shields.io/badge/JWT_Auth-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" />
+<img alt="Render" src="https://img.shields.io/badge/Render-46E3B7?style=flat-square&logo=render&logoColor=black" />
+<img alt="Vercel" src="https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white" />
+</p>
+
+</div>
+
+---
+
+## Contents
+
+| Section | What is inside |
+| :--- | :--- |
+| [Overview](#overview) | What Sutra does and how the repo is laid out |
+| [Features](#features) | Everything the app can do today |
+| [Architecture](#architecture) | System diagram and request flows |
+| [Tech Stack](#tech-stack) | Libraries and services in use |
+| [API Reference](#api-reference) | Endpoint table |
+| [Getting Started](#getting-started) | Run it locally in three steps |
+| [Environment Variables](#environment-variables) | Backend and frontend config |
+| [Deployment](#deployment) | How it is hosted |
+| [Notes](#notes) | Behaviour worth knowing |
+
+---
 
 ## Overview
 
-The project is split into:
+Sutra turns long links into short, shareable ones, then tells you what happened to them. Every link gets a dashboard entry, a click history, and its own designable QR code.
 
-- `url-shortener-sb` - Spring Boot backend
-- `url-shortener-react` - React + Vite frontend
+The repository holds two applications:
 
-## Current Features
+```
+url-shortener-project/
+├── url-shortener-sb/        # Spring Boot backend  (Java 21, MySQL, Redis)
+└── url-shortener-react/     # React frontend       (Vite, TypeScript, Tailwind)
+```
 
-- User registration and login with JWT authentication
-- Create short URLs with optional custom slugs
-- Personal dashboard for managing links
-- Per-link analytics for the last 7 days
-- Redis-backed redirect lookup caching
-- Redis click buffering with scheduled sync to MySQL
-- QR Studio with live preview and downloadable QR exports
-- Preset QR themes, color controls, shape controls, and logo upload
-- Spotify link detection with Spotify Code download support
+---
 
-## Tech Stack
+## Features
 
-- Frontend: React, TypeScript, Vite, Tailwind CSS, shadcn/ui, Framer Motion
-- Backend: Java 21, Spring Boot, Spring Security, JWT
-- Database: MySQL
-- Cache / Buffer Layer: Redis
+<table>
+<tr>
+<td width="50%" valign="top">
 
-## Latest Changes
+### Links
 
-### Redis Integration
+- Register and log in with JWT authentication
+- Create short URLs in one click
+- Optional custom slugs for branded links
+- Personal dashboard to manage every link
+- Instant redirects served from a Redis cache
 
-Redis is now part of the runtime architecture, not just an optional add-on.
+</td>
+<td width="50%" valign="top">
 
-- Redirect lookups use Spring caching with Redis via `@Cacheable`
-- Clicks are buffered in Redis instead of writing to MySQL on every redirect
-- Buffered clicks are flushed to MySQL on a scheduled interval
-- Redis keys use TTLs to avoid stale buffered data accumulating
-- If Redis has an error, the backend logs it and falls back safely instead of failing user requests
+### Analytics
 
-This improves redirect performance and reduces write pressure on MySQL.
+- Per link click history
+- All time dashboard with daily, weekly, and monthly bucketing
+- Total clicks across every link you own
+- Clicks buffered in Redis, then synced to MySQL in batches
+- Area charts rendered with Recharts
 
-### Updated QR Studio
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
 
-The dashboard QR experience has been expanded significantly.
+### QR Studio
 
 - Live QR preview inside the dashboard
 - Quick theme presets
 - Foreground and background color pickers
 - Pattern and corner style controls
-- Square, rounded, and circular frame options
-- Adjustable export resolution
+- Square, rounded, and circular frames
 - Logo upload with size control
-- PNG download for the customized QR code
-- Spotify-specific code download for Spotify links
+- Adjustable export resolution and PNG download
+- Spotify link detection with Spotify Code export
 
-## Deployment
+</td>
+<td width="50%" valign="top">
 
-This project is set up to run with:
+### Platform
 
-- Backend on Render
-- Frontend on Vercel
-- MySQL as the primary database
-- Redis for caching and click buffering
+- Graceful splash screen for backend cold starts
+- Adaptive backend health polling
+- Redis start up diagnostics and safe fallback
+- Scheduled cache eviction to stay inside free tier memory
+- Responsive UI with dark friendly styling
 
-## Environment Variables
+</td>
+</tr>
+</table>
 
-### Backend (`url-shortener-sb`)
+---
 
-- `DB_URL` - JDBC URL for MySQL
-- `DB_USERNAME` - MySQL username
-- `DB_PASSWORD` - MySQL password
-- `JWT_SECRET` - secret used for signing JWTs
-- `FRONTEND_URL` - frontend origin allowed by the backend
-- `REDIS_URL` - Redis connection URL
-- `APP_CLICK_SYNC_INTERVAL_MS` - optional override for click sync interval in milliseconds
+## Architecture
 
-### Frontend (`url-shortener-react`)
+```mermaid
+flowchart LR
+    U([Visitor]) -->|GET /abc123| API
 
-- `VITE_BACKEND_URL` - backend base URL, for example `http://localhost:8080`
+    subgraph Frontend["Frontend on Vercel"]
+        R["React + Vite<br/>Dashboard, QR Studio"]
+    end
 
-## Local Development
+    subgraph Backend["Backend on Render"]
+        API["Spring Boot<br/>REST + Redirect"]
+        SYNC["ClickSyncService<br/>scheduled flush"]
+    end
+
+    subgraph Data["Data layer"]
+        REDIS[("Redis<br/>cache + click buffer")]
+        DB[("MySQL<br/>users, links, clicks")]
+    end
+
+    R -->|JWT REST calls| API
+    API -->|cache lookup| REDIS
+    API -->|cache miss| DB
+    API -->|INCR click| REDIS
+    SYNC -->|drain buffer| REDIS
+    SYNC -->|batch insert| DB
+
+    style REDIS fill:#DC382D,color:#fff
+    style DB fill:#4479A1,color:#fff
+    style API fill:#6DB33F,color:#fff
+    style R fill:#61DAFB,color:#000
+```
+
+### Redirect path
+
+A redirect never waits on MySQL when the link is already cached, and never writes to MySQL at all.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant V as Visitor
+    participant S as Spring Boot
+    participant C as Redis
+    participant D as MySQL
+
+    V->>S: GET /{shortUrl}
+    S->>C: lookup short URL
+    alt Cache hit
+        C-->>S: original URL
+    else Cache miss
+        S->>D: SELECT url_mapping
+        D-->>S: original URL
+        S->>C: store with TTL
+    end
+    S-)C: INCR click:count:{shortUrl} (async)
+    S-->>V: 302 redirect
+```
+
+### Click buffering
+
+Writes are the expensive part of a redirect, so they are batched instead of happening one row at a time.
+
+```mermaid
+flowchart TD
+    A[Redirect happens] --> B["INCR click:count:slug<br/>SADD click:tracked"]
+    B --> C{{"Keys carry a 24 h TTL"}}
+    D[["Scheduled job<br/>APP_CLICK_SYNC_INTERVAL_MS"]] --> E[Read tracked set]
+    E --> F[Drain counters]
+    F --> G[(Batch insert into MySQL)]
+    G --> H[Dashboard analytics]
+
+    style B fill:#DC382D,color:#fff
+    style G fill:#4479A1,color:#fff
+```
+
+> **Why batch:** storing every click as its own timestamped row would grow without bound and exhaust a free tier Redis quota. Sutra stores counters only, and the sync job stamps each batch with its flush time, which keeps daily level analytics accurate.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+| :--- | :--- |
+| <img src="https://cdn.simpleicons.org/react/61DAFB" width="14" /> Frontend | React 18, TypeScript, Vite, React Router |
+| <img src="https://cdn.simpleicons.org/tailwindcss/06B6D4" width="14" /> Styling | Tailwind CSS, shadcn/ui, Radix UI, Framer Motion |
+| <img src="https://cdn.simpleicons.org/chartdotjs/FF6384" width="14" /> Charts and QR | Recharts, Chart.js, qr-code-styling, qrcode.react |
+| <img src="https://cdn.simpleicons.org/springboot/6DB33F" width="14" /> Backend | Java 21, Spring Boot, Spring Security, Spring Data JPA |
+| <img src="https://cdn.simpleicons.org/jsonwebtokens/FFFFFF" width="14" /> Auth | JWT bearer tokens, BCrypt password hashing |
+| <img src="https://cdn.simpleicons.org/mysql/4479A1" width="14" /> Database | MySQL 8 |
+| <img src="https://cdn.simpleicons.org/redis/DC382D" width="14" /> Cache | Redis for redirect caching and click buffering |
+| <img src="https://cdn.simpleicons.org/vitest/6E9F18" width="14" /> Testing | Vitest, Testing Library, Playwright |
+
+---
+
+## API Reference
+
+All endpoints are prefixed by the backend base URL. Everything under `/api/urls` requires an `Authorization: Bearer <token>` header.
+
+| Method | Endpoint | Auth | Description |
+| :--- | :--- | :---: | :--- |
+| `POST` | `/api/auth/public/register` | No | Create an account |
+| `POST` | `/api/auth/public/login` | No | Log in and receive a JWT |
+| `POST` | `/api/urls/shorten` | Yes | Create a short URL, optionally with a custom slug |
+| `GET` | `/api/urls/myurls` | Yes | List every link owned by the user |
+| `GET` | `/api/urls/analytics/{shortUrl}` | Yes | Click events for one link between two timestamps |
+| `GET` | `/api/urls/totalClicks` | Yes | Clicks per day across all of the user's links |
+| `GET` | `/{shortUrl}` | No | Redirect to the original URL |
+
+<details>
+<summary><b>Example: create a short URL</b></summary>
+
+```bash
+curl -X POST http://localhost:8080/api/urls/shorten \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"originalUrl":"https://example.com/a/very/long/path","shortUrl":"my-slug"}'
+```
+
+```json
+{
+  "id": 12,
+  "originalUrl": "https://example.com/a/very/long/path",
+  "shortUrl": "my-slug",
+  "clickCount": 0,
+  "createdDate": "2026-09-11T18:04:22"
+}
+```
+
+Leave `shortUrl` out of the request body to get a generated slug instead.
+
+</details>
+
+<details>
+<summary><b>Example: fetch analytics for one link</b></summary>
+
+```bash
+curl -G http://localhost:8080/api/urls/analytics/my-slug \
+  -H "Authorization: Bearer $TOKEN" \
+  --data-urlencode "startDate=2026-09-01T00:00:00" \
+  --data-urlencode "endDate=2026-09-11T23:59:59"
+```
+
+`/api/urls/totalClicks` takes plain dates instead, for example `startDate=2026-09-01`.
+
+</details>
+
+---
+
+## Getting Started
 
 ### Prerequisites
 
-- Java 21
-- Node.js and npm
-- MySQL running locally or remotely
-- Redis running locally or remotely
+| Requirement | Version |
+| :--- | :--- |
+| Java | 21 |
+| Node.js and npm | 18 or newer |
+| MySQL | running locally or remotely |
+| Redis | running locally or remotely |
 
 ### 1. Start MySQL and Redis
 
-Make sure both services are available before starting the backend.
-
-Example local Redis URL:
+Both must be reachable before the backend boots. A local Redis URL looks like this:
 
 ```bash
 redis://localhost:6379
 ```
 
-### 2. Start the Backend
+### 2. Start the backend
 
 ```bash
 export DB_URL=jdbc:mysql://localhost:3306/urlshortenerdb
@@ -114,11 +298,11 @@ cd url-shortener-sb
 ./mvnw spring-boot:run
 ```
 
-The backend runs on `http://localhost:8080`.
+The backend serves `http://localhost:8080`.
 
-### 3. Start the Frontend
+### 3. Start the frontend
 
-Create a `.env` file inside `url-shortener-react` with:
+Create `url-shortener-react/.env`:
 
 ```env
 VITE_BACKEND_URL=http://localhost:8080
@@ -132,9 +316,77 @@ npm install
 npm run dev
 ```
 
-The frontend runs on `http://localhost:5173`.
+The frontend serves `http://localhost:5173`.
+
+### Frontend scripts
+
+| Command | What it does |
+| :--- | :--- |
+| `npm run dev` | Start the Vite dev server |
+| `npm run build` | Production build |
+| `npm run preview` | Preview the production build |
+| `npm run lint` | Run ESLint |
+| `npm test` | Run the Vitest suite |
+
+---
+
+## Environment Variables
+
+### Backend (`url-shortener-sb`)
+
+| Variable | Required | Description |
+| :--- | :---: | :--- |
+| `DB_URL` | Yes | JDBC URL for MySQL |
+| `DB_USERNAME` | Yes | MySQL username |
+| `DB_PASSWORD` | Yes | MySQL password |
+| `JWT_SECRET` | Yes | Secret used to sign JWTs |
+| `FRONTEND_URL` | Yes | Frontend origin allowed by CORS |
+| `REDIS_URL` | Yes | Redis connection URL |
+| `APP_CLICK_SYNC_INTERVAL_MS` | No | Override the click sync interval, in milliseconds |
+
+### Frontend (`url-shortener-react`)
+
+| Variable | Required | Description |
+| :--- | :---: | :--- |
+| `VITE_BACKEND_URL` | Yes | Backend base URL, for example `http://localhost:8080` |
+
+---
+
+## Deployment
+
+```mermaid
+flowchart LR
+    subgraph Cloud[" "]
+        V["Vercel<br/>React frontend"] --> RN["Render<br/>Spring Boot API"]
+        RN --> MS[("MySQL")]
+        RN --> RD[("Redis")]
+    end
+
+    style V fill:#000,color:#fff
+    style RN fill:#46E3B7,color:#000
+    style MS fill:#4479A1,color:#fff
+    style RD fill:#DC382D,color:#fff
+```
+
+| Component | Host |
+| :--- | :--- |
+| Frontend | Vercel |
+| Backend | Render |
+| Database | MySQL |
+| Cache and click buffer | Redis |
+
+---
 
 ## Notes
 
-- Redis is required for the current backend flow because caching and click buffering are active features.
-- Click analytics are persisted to MySQL after the configured sync interval, so totals may update in small batches instead of instantly on every redirect.
+- **Redis is required.** Caching and click buffering are active parts of the request path, not optional extras. If Redis errors, the backend logs it and falls back safely rather than failing the user's request.
+- **Click totals update in batches.** Analytics are written to MySQL on the configured sync interval, so a fresh click may take a moment to show up in the dashboard.
+- **Cold starts are expected on free hosting.** The frontend shows a splash screen and polls the backend until it wakes up.
+
+---
+
+<div align="center">
+
+Built by <a href="https://github.com/AbhayKale332">AbhayKale332</a>
+
+</div>

@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Periodically drains the Redis click buffer and persists it to MySQL.
+ * Periodically drains the Redis click buffer and persists it to the database.
  *
  * Runs every 30 seconds (configurable via app.click-sync.interval-ms).
  *
@@ -28,7 +28,7 @@ import java.util.Set;
  * One sync cycle:
  *   1. Fetch all shortUrls with pending clicks (from the tracked SET)
  *   2. Drain the count delta (GETDEL on the counter key)
- *   3. Bump UrlMapping.clickCount in MySQL
+ *   3. Bump UrlMapping.clickCount in the database
  *   4. Batch-insert delta ClickEvent rows all dated to sync-time
  *   5. Remove the shortUrl from the tracking SET
  */
@@ -41,6 +41,12 @@ public class ClickSyncService {
     private final UrlMappingRepository urlMappingRepository;
     private final ClickEventRepository clickEventRepository;
 
+    /**
+     * Every Redis call below is non-throwing (see ClickBufferService): if Redis
+     * is down, getTrackedUrls() returns an empty set and this cycle is a no-op.
+     * Clicks that happened during the outage were never buffered, so there is
+     * nothing to recover — the site stayed up, only the counts are affected.
+     */
     @Scheduled(fixedDelayString = "${app.click-sync.interval-ms:30000}")
     @Transactional
     public void syncClicksToDatabase() {
@@ -49,7 +55,7 @@ public class ClickSyncService {
             return;
         }
 
-        log.info("ClickSync: syncing {} URL(s) from Redis → MySQL", trackedUrls.size());
+        log.info("ClickSync: syncing {} URL(s) from Redis to the database", trackedUrls.size());
 
         List<ClickEvent> eventsToSave = new ArrayList<>();
         // Single sync timestamp for the whole batch — preserves date-level accuracy

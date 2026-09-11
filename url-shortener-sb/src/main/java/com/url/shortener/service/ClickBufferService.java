@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Buffers click events in Redis instead of writing to MySQL on every redirect.
@@ -35,7 +36,13 @@ public class ClickBufferService {
     /** Keys expire after 24 h if sync never drains them (crash / deploy gap). */
     private static final Duration KEY_TTL = Duration.ofHours(24);
 
+    /** Suppress repeat outage stack traces to at most one per minute. */
+    private static final long OUTAGE_LOG_INTERVAL_MS = 60_000L;
+
     private final RedisTemplate<String, String> redisTemplate;
+
+    private final AtomicLong suppressedFailures = new AtomicLong();
+    private final AtomicLong lastOutageLogAt = new AtomicLong();
 
     /**
      * Hot path — called on every redirect (from a background thread via @Async).
@@ -59,28 +66,75 @@ public class ClickBufferService {
 
             log.debug("Buffered click for '{}'", shortUrl);
         } catch (RuntimeException e) {
-            log.error("Redis click buffer write failed for '{}': {}", shortUrl, e.getMessage(), e);
+            // This runs on every redirect. Logging a full stack trace per click
+            // would flood the log during an outage and make the I/O itself a
+            // bottleneck, so collapse repeats into one line per minute.
+            logOutage(e);
+        }
+    }
+
+    /**
+     * Logs the first failure in each window with detail, and counts the rest.
+     * Losing a buffered click is not worth taking the site down over: the
+     * redirect itself already succeeded before this method was reached.
+     */
+    private void logOutage(RuntimeException e) {
+        long now = System.currentTimeMillis();
+        long last = lastOutageLogAt.get();
+
+        if (now - last >= OUTAGE_LOG_INTERVAL_MS && lastOutageLogAt.compareAndSet(last, now)) {
+            long skipped = suppressedFailures.getAndSet(0);
+            if (skipped > 0) {
+                log.warn("Redis click buffer unavailable: {} ({} further failure(s) suppressed in the last minute)",
+                        e.getMessage(), skipped);
+            } else {
+                log.warn("Redis click buffer unavailable, clicks are not being counted: {}", e.getMessage());
+            }
+        } else {
+            suppressedFailures.incrementAndGet();
         }
     }
 
     // ── Drain helpers called by ClickSyncService ───────────────────────────
 
-    /** Returns all shortUrls that have un-synced clicks. */
+    /**
+     * Returns all shortUrls that have un-synced clicks.
+     * Returns an empty set if Redis is unavailable, so the sync job simply
+     * finds nothing to do instead of blowing up.
+     */
     public Set<String> getTrackedUrls() {
-        return redisTemplate.opsForSet().members(TRACKED_SET_KEY);
+        try {
+            Set<String> tracked = redisTemplate.opsForSet().members(TRACKED_SET_KEY);
+            return tracked == null ? Set.of() : tracked;
+        } catch (RuntimeException e) {
+            log.warn("Redis unavailable while reading the click tracking set: {}", e.getMessage());
+            return Set.of();
+        }
     }
 
     /**
      * Atomically reads and deletes the click count delta for a shortUrl.
-     * Returns 0 if the key was already expired or never existed.
+     * Returns 0 if the key was already expired, never existed, or Redis is down.
      */
     public long drainClickCount(String shortUrl) {
-        String raw = redisTemplate.opsForValue().getAndDelete(COUNT_KEY_PREFIX + shortUrl);
-        return raw == null ? 0L : Long.parseLong(raw);
+        try {
+            String raw = redisTemplate.opsForValue().getAndDelete(COUNT_KEY_PREFIX + shortUrl);
+            return raw == null ? 0L : Long.parseLong(raw);
+        } catch (NumberFormatException e) {
+            log.warn("Discarding non-numeric click counter for '{}': {}", shortUrl, e.getMessage());
+            return 0L;
+        } catch (RuntimeException e) {
+            log.warn("Redis unavailable while draining clicks for '{}': {}", shortUrl, e.getMessage());
+            return 0L;
+        }
     }
 
     /** Remove a shortUrl from the tracking set after it has been synced. */
     public void removeFromTracked(String shortUrl) {
-        redisTemplate.opsForSet().remove(TRACKED_SET_KEY, shortUrl);
+        try {
+            redisTemplate.opsForSet().remove(TRACKED_SET_KEY, shortUrl);
+        } catch (RuntimeException e) {
+            log.warn("Redis unavailable while clearing tracking entry for '{}': {}", shortUrl, e.getMessage());
+        }
     }
 }

@@ -1,6 +1,11 @@
 package com.url.shortener.config;
 
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.SocketOptions;
+import io.lettuce.core.TimeoutOptions;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.data.redis.LettuceClientConfigurationBuilderCustomizer;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachingConfigurer;
 import org.springframework.cache.interceptor.CacheErrorHandler;
@@ -21,6 +26,45 @@ import java.util.Map;
 @Slf4j
 @Configuration
 public class RedisConfig implements CachingConfigurer {
+
+    /** How long a single Redis command may take before it is abandoned. */
+    @Value("${app.redis.command-timeout-ms:250}")
+    private long commandTimeoutMs;
+
+    /** How long to wait for the TCP connection itself. */
+    @Value("${app.redis.connect-timeout-ms:1000}")
+    private long connectTimeoutMs;
+
+    /**
+     * Makes Redis fail FAST instead of hanging.
+     *
+     * Without this, Lettuce waits up to 60 s for a command and queues commands
+     * while disconnected. A Redis outage would then block Tomcat request threads
+     * on the redirect hot path until the pool is exhausted and the whole site
+     * stops responding — even though every Redis call is already wrapped in a
+     * fallback. A fallback that takes 60 s to trigger is not a fallback.
+     *
+     * With these options an outage costs ~250 ms per request at worst, the
+     * CacheErrorHandler below fires, and the request is served from Postgres.
+     * REJECT_COMMANDS makes calls fail immediately once Lettuce knows it is
+     * disconnected, so the steady-state cost during an outage is near zero.
+     * autoReconnect means normal service resumes on its own when Redis returns.
+     */
+    @Bean
+    public LettuceClientConfigurationBuilderCustomizer lettuceFailFastCustomizer() {
+        Duration commandTimeout = Duration.ofMillis(commandTimeoutMs);
+
+        return builder -> builder
+                .commandTimeout(commandTimeout)
+                .clientOptions(ClientOptions.builder()
+                        .autoReconnect(true)
+                        .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
+                        .socketOptions(SocketOptions.builder()
+                                .connectTimeout(Duration.ofMillis(connectTimeoutMs))
+                                .build())
+                        .timeoutOptions(TimeoutOptions.enabled(commandTimeout))
+                        .build());
+    }
 
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
