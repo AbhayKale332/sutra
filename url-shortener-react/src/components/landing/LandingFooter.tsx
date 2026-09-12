@@ -1,42 +1,37 @@
-import { Link2, Github, Twitter, Linkedin } from "lucide-react";
+import { Link2, Github } from "lucide-react";
 import BackendStatus from "../BackendStatus";
 
 const LandingFooter = () => {
   return (
-    <footer className="bg-slate-900 text-slate-100 py-14 dark:bg-slate-950 dark:border-t dark:border-slate-800 dark:text-slate-400">
-      <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+    <footer className="border-t border-border py-10">
+      <div className="container mx-auto max-w-4xl px-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           <div>
-            <div className="flex items-center gap-2 mb-4 text-white">
+            <div className="flex items-center gap-2 mb-3 text-foreground">
               <Link2 className="w-6 h-6 rotate-[-45deg]" />
               <span className="text-xl font-bold tracking-tight">Sutra</span>
             </div>
-            <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
-              The modern URL shortener with powerful analytics for teams and individuals.
+            <p className="text-muted-foreground text-sm leading-relaxed max-w-xs">
+              Minimal link management for everyday sharing.
             </p>
           </div>
 
-          <div className="flex flex-col md:items-center">
+          <div className="flex flex-col">
              <BackendStatus />
           </div>
           
           <div className="flex flex-col md:items-end">
-            <h4 className="font-semibold mb-4 text-white uppercase text-xs tracking-widest">Connect</h4>
-            <div className="flex gap-6">
-              <a href="https://x.com/Abhay__Kale" target="_blank" rel="noreferrer" className="text-slate-400 hover:text-white transition-colors">
-                <Twitter className="w-6 h-6" />
-              </a>
-              <a href="https://github.com/AbhayKale332" target="_blank" rel="noreferrer" className="text-slate-400 hover:text-white transition-colors">
-                <Github className="w-6 h-6" />
-              </a>
-              <a href="https://www.linkedin.com/in/abhay-kale-407357263/" target="_blank" rel="noreferrer" className="text-slate-400 hover:text-white transition-colors">
-                <Linkedin className="w-6 h-6" />
-              </a>
-            </div>
+            <a href="https://github.com/AbhayKale332" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Github className="w-4 h-4" />
+              GitHub
+            </a>
           </div>
         </div>
-        <div className="border-t border-slate-800 mt-10 pt-6 text-center text-slate-500 text-sm">
-          © {new Date().getFullYear()} Sutra Linklytics. Developed by Abhay Kale
+        <div className="border-t border-border mt-8 pt-5 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span>© {new Date().getFullYear()} Sutra Linklytics.</span>
+            <span>Developed by Abhay Kale</span>
+          </div>
         </div>
       </div>
     </footer>
