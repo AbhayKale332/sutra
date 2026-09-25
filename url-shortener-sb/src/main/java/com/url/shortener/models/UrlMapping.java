@@ -14,6 +14,8 @@ public class UrlMapping implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    // TEXT, not the default VARCHAR(255): signed/presigned URLs easily exceed 255 chars
+    @Column(columnDefinition = "TEXT")
     private String originalUrl;
     private String shortUrl;
     private int clickCount = 0;

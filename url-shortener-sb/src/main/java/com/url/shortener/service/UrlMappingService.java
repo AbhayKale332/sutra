@@ -32,7 +32,7 @@ public class UrlMappingService {
         String shortUrl;
         if (customSlug != null && !customSlug.isEmpty()) {
             if (urlMappingRepository.findByShortUrl(customSlug) != null) {
-                throw new RuntimeException("Custom link is already taken!");
+                throw new IllegalStateException("Custom link is already taken!");
             }
             shortUrl = customSlug;
         } else {

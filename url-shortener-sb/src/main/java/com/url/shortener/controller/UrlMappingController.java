@@ -7,6 +7,7 @@ import com.url.shortener.models.User;
 import com.url.shortener.service.UrlMappingService;
 import com.url.shortener.service.UserService;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -30,17 +31,20 @@ public class UrlMappingController {
 
     @PostMapping("/shorten")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<UrlMappingDTO> createShortUrl(@RequestBody UrlRequest request,
-                                                        Principal principal){
+    public ResponseEntity<?> createShortUrl(@RequestBody UrlRequest request,
+                                            Principal principal){
         String originalUrl = request.getOriginalUrl();
         String customSlug = request.getShortUrl(); // Custom Link (optional)
-        
+
         try {
             User user = userService.findByUsername(principal.getName());
             UrlMappingDTO urlMappingDTO = urlMappingService.createShortUrl(originalUrl, customSlug, user);
             return ResponseEntity.ok(urlMappingDTO);
+        } catch (IllegalStateException e) {
+            // Custom slug collision — the only case the client should report as "taken"
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(null); // Or handle error specifically
+            return ResponseEntity.badRequest().body(Map.of("message", "Could not shorten this URL"));
         }
     }
 

@@ -290,10 +290,10 @@ const Dashboard = () => {
       setIsDialogOpen(false);
       fetchUrls();
     } catch (error: any) {
-      if (error.response?.status === 400) {
+      if (error.response?.status === 409) {
         toast.error("That custom link is already taken!");
       } else {
-        toast.error("Failed to shorten URL");
+        toast.error(error.response?.data?.message || "Failed to shorten URL");
       }
     } finally {
       setIsCreating(false);
